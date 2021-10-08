@@ -196,6 +196,9 @@ function UpdateGameMovement(game, userId, move, id) {
     return responce;
 }
 
+function joinOrLeave(channelId) {
+
+}
 function saveGame(game) {
 
 }
