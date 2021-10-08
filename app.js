@@ -4,6 +4,141 @@ const { createCanvas } = require('canvas');
 
 const app = express();
 const port = process.env.PORT || '80';
+var games = [];
+
+var testGameData = {
+    "users": [
+        {
+            "id": "794921502230577182",
+            "color": {
+                "color": "#ffffff",
+                "emote": ":white_circle:"
+            },
+            "name": "deepparag",
+            "lastMessageId": null,
+            "x": 21,
+            "y": 18,
+            "actionPoints": 3,
+            "hour": 3,
+            "health": 3,
+            "lastAttack": 0,
+            "accuracy": 80,
+            "playerId": 0
+        },
+        {
+            "id": "875042500056862721",
+            "color": {
+                "color": "#0015ff",
+                "emote": ":blue_circle:"
+            },
+            "name": "Definitely not a Muse",
+            "lastMessageId": null,
+            "x": 7,
+            "y": 30,
+            "actionPoints": 6,
+            "hour": 3,
+            "health": 3,
+            "lastAttack": 0,
+            "accuracy": 80,
+            "playerId": 1
+        },
+        {
+            "id": "792002811583266856",
+            "color": {
+                "color": "#701420",
+                "emote": ":brown_circle:"
+            },
+            "name": "DaWise_Weirdo",
+            "lastMessageId": null,
+            "x": 17,
+            "y": 22,
+            "actionPoints": 3,
+            "hour": 2,
+            "health": 3,
+            "lastAttack": 0,
+            "accuracy": 80,
+            "playerId": 2
+        },
+        {
+            "id": "819805772522324008",
+            "color": {
+                "color": "#00a80e",
+                "emote": ":green_circle:"
+            },
+            "name": "Yelena",
+            "lastMessageId": null,
+            "x": 21,
+            "y": 23,
+            "actionPoints": 5,
+            "hour": 6,
+            "health": 3,
+            "lastAttack": 0,
+            "accuracy": 80,
+            "playerId": 3
+        },
+        {
+            "id": "762366471371751455",
+            "color": {
+                "color": "#ff6f00",
+                "emote": ":orange_circle:"
+            },
+            "name": "notalivehuman",
+            "lastMessageId": null,
+            "x": 28,
+            "y": 23,
+            "actionPoints": 4,
+            "hour": 0,
+            "health": 3,
+            "lastAttack": 0,
+            "accuracy": 80,
+            "playerId": 4
+        },
+        {
+            "id": "840322628807163984",
+            "color": {
+                "color": "#3f00a3",
+                "emote": ":purple_circle:"
+            },
+            "name": "????",
+            "lastMessageId": null,
+            "x": 10,
+            "y": 23,
+            "actionPoints": 5,
+            "hour": 1,
+            "health": 3,
+            "lastAttack": 0,
+            "accuracy": 80,
+            "playerId": 5
+        },
+        {
+            "id": "766162972014805023",
+            "color": {
+                "color": "#ff2f00",
+                "emote": ":red_circle:"
+            },
+            "name": "natasha",
+            "lastMessageId": null,
+            "x": 7,
+            "y": 14,
+            "actionPoints": 7,
+            "hour": 2,
+            "health": 3,
+            "lastAttack": 0,
+            "accuracy": 80,
+            "playerId": 6
+        }
+
+    ],
+    "lastAction": "",
+    "channelId": "892972590447087618",
+    "id": 7,
+    "gameRunning": true,
+    "boardSize": 32,
+    "lastMessageId": 894602329695866900
+};
+
+games.push(testGameData);
+
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
@@ -18,21 +153,32 @@ app.get('/api', (req, res) => {
     );
 });
 
+
+app.get('/image', (req, res) => {
+    res.render(
+        'index',
+        {
+            title: 'Coming Soon!',
+        }
+    );
+});
+
 app.listen(port, () => {
     console.log(`Listening to requests on http://localhost:${port}`);
 });
 
 
 
+function getGameById(channelId) {
 
+    games.forEach(function (game) { if (game.channelId == channelId) { return game; } });
 
+}
+function getUserById(game, userId) {
 
+    game.users.forEach(function (user) { if (userId == user.id) { return user; } });
+}
 
-
-
-
-
-//DEEPS CODE
 function DrawNodeJS(game) {
     const width = game.boardSize * 2 * 10 + 10;
     const height = game.boardSize * 2 * 10 + 10;
@@ -55,6 +201,7 @@ function DrawNodeJS(game) {
         context.fillStyle = user.color.color;
         context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
     });
+    return canvas.toBuffer('image/png');
 
 }
 
@@ -196,13 +343,11 @@ function UpdateGameMovement(game, userId, move, id) {
     return responce;
 }
 
-function joinOrLeave(channelId) {
+function joinOrLeave(channelId, userId) {
 
 }
+
+
 function saveGame(game) {
 
-}
-function getUserById(game, userId) {
-
-    game.users.forEach(function (user) { if (userId == user.id) { return user; } });
 }
