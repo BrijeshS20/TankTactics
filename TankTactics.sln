@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31702.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "TankTactics", "TankTactics.njsproj", "{B43BB38E-CA00-4EE3-8EA1-2F78256DC476}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B43BB38E-CA00-4EE3-8EA1-2F78256DC476}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B43BB38E-CA00-4EE3-8EA1-2F78256DC476}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B43BB38E-CA00-4EE3-8EA1-2F78256DC476}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B43BB38E-CA00-4EE3-8EA1-2F78256DC476}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {618A474F-A3EB-4955-95A4-F5C33D15D752}
+	EndGlobalSection
+EndGlobal
