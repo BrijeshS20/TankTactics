@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const { createCanvas } = require('canvas');
 
 const app = express();
 const port = process.env.PORT || '80';
@@ -32,7 +33,6 @@ app.listen(port, () => {
 
 
 //DEEPS CODE
-
 function DrawNodeJS(game) {
     const width = game.boardSize * 2 * 10 + 10;
     const height = game.boardSize * 2 * 10 + 10;
@@ -56,8 +56,6 @@ function DrawNodeJS(game) {
         context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
     });
 
-    const buffer = canvas.toBuffer('image/png');
-    fs.writeFileSync('./test.png', buffer);
 }
 
 
