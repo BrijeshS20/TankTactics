@@ -1,7 +1,12 @@
 
 const { createCanvas } = require('canvas');
 
+const { Datastore } = require('@google-cloud/datastore');
+
+
 var games = [];
+
+
 
 var testGameData = {
     "users": [
@@ -12,7 +17,6 @@ var testGameData = {
                 "emote": ":white_circle:"
             },
             "name": "deepparag",
-            "lastMessageId": null,
             "x": 21,
             "y": 18,
             "actionPoints": 3,
@@ -29,7 +33,6 @@ var testGameData = {
                 "emote": ":blue_circle:"
             },
             "name": "Definitely not a Muse",
-            "lastMessageId": null,
             "x": 7,
             "y": 30,
             "actionPoints": 6,
@@ -46,7 +49,6 @@ var testGameData = {
                 "emote": ":brown_circle:"
             },
             "name": "DaWise_Weirdo",
-            "lastMessageId": null,
             "x": 17,
             "y": 22,
             "actionPoints": 3,
@@ -63,7 +65,6 @@ var testGameData = {
                 "emote": ":green_circle:"
             },
             "name": "Yelena",
-            "lastMessageId": null,
             "x": 21,
             "y": 23,
             "actionPoints": 5,
@@ -80,7 +81,6 @@ var testGameData = {
                 "emote": ":orange_circle:"
             },
             "name": "notalivehuman",
-            "lastMessageId": null,
             "x": 28,
             "y": 23,
             "actionPoints": 4,
@@ -97,7 +97,6 @@ var testGameData = {
                 "emote": ":purple_circle:"
             },
             "name": "????",
-            "lastMessageId": null,
             "x": 10,
             "y": 23,
             "actionPoints": 5,
@@ -114,7 +113,6 @@ var testGameData = {
                 "emote": ":red_circle:"
             },
             "name": "natasha",
-            "lastMessageId": null,
             "x": 7,
             "y": 14,
             "actionPoints": 7,
@@ -126,21 +124,32 @@ var testGameData = {
         }
 
     ],
-    "lastAction": "",
     "channelId": "892972590447087618",
     "id": 7,
     "gameRunning": true,
-    "boardSize": 32,
-    "lastMessageId": 894602329695866900
+    "boardSize": 32
 };
 
 games.push(testGameData);
+
+// Instantiate a datastore client
+const datastore = new Datastore();
 const express = require('express');
 const path = require('path');
-
 const app = express();
 
-
+datastore.get(datastore.key(["Game", 0]), function (err, entity) {
+    if (typeof entity !== 'undefined') {
+        var channelIds = entity;
+        channelIds.forEach((channelId) => {
+            datastore.get(datastore.key(["Game", channelId]), function (err, entity) {
+                if (typeof entity !== 'undefined') {
+                    games.push(entity);
+                }
+            });
+        });
+    }
+});
 
 app.use(express.static(path.resolve(path.join(__dirname, '/public'))));
 
@@ -149,19 +158,25 @@ app.get('/', (req, res) => {
 });
 
 app.get('/data', (req, res) => {
-    res.send(JSON.stringify(testGameData));
+    res.send(getGameById(req.query.channelId));
+
+});
+
+app.get('/join', (req, res) => {
+    res.send(join(req.query.channelId, req.query.userId, req.name));
+
 });
 
 app.get('/move', (req, res) => {
-    res.send(JSON.stringify(testGameData));
+    res.send(UpdateGameMovement(getGameById(req.query.channelId), req.query.userId, req.query.id));
 });
 
 app.get('/image', (req, res) => {
-    res.send(JSON.stringify(testGameData));
+    res.send(DrawNodeJS(getGameById(req.query.channelId)));
 });
 
 app.get('/games', (req, res) => {
-    res.send(JSON.stringify(testGameData));
+    res.send(getGames(res.query.userId));
 });
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
@@ -169,9 +184,14 @@ app.listen(PORT, () => {
     console.log('Press Ctrl+C to quit.');
 });
 
+function getGames(userId) {
+    var lobbies = [];
+    games.forEach(function (game) { if (containsUser(game, userId)) { lobbies.push(game.channelId); } });
+    return lobbies;
 
+}
 function getGameById(channelId) {
-
+    channelId = Number.parseInt(channelId);
     games.forEach(function (game) { if (game.channelId == channelId) { return game; } });
 
 }
@@ -202,7 +222,7 @@ function DrawNodeJS(game) {
         context.fillStyle = user.color.color;
         context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
     });
-    return canvas.toBuffer('image/png');
+    return canvas.toBuffer();
 
 }
 
@@ -336,19 +356,119 @@ function UpdateGameMovement(game, userId, move, id) {
         responce.code = 405;
         responce.message = "You need to wait for more players.";
     }
-    responce.game = game;
+
     if (responce.code != 405) {
-        game.lastAction = responce.message;
-        saveGame();
+        responce.game = game;
+        saveGame(game);
     }
     return responce;
 }
 
-function joinOrLeave(channelId, userId) {
-
+function join(channelId, userId, name) {
+    channelId = Number.parseInt(channelId);
+    var responce = { code: 200, message: name+" has joined." , game: null };
+    var channelIds = getAllChannels();
+    if (channelIds.contains(channelId)) {
+        var game = getGameById(channelId);
+        if (containsUser(game, userId)) {
+            responce.code = 405;
+            responce.message = "U can join only once.";
+        } else {
+            var x = Math.round(Math.random * game.boardSize);
+            var y = Math.round(Math.random * game.boardSize);
+            game.users.push(createUser(userId, name, game.playerId, x, y));
+            game.id++;
+            if (game.id > 7) {
+                game.gameRunning = true;
+            }
+            saveGame();
+            responce.game = game;
+        }
+    
+    } else {
+        var game = createGame(channelId);
+        var x = Math.round(Math.random * game.boardSize);
+        var y = Math.round(Math.random * game.boardSize);
+        game.users.push(createUser(userId, name, game.playerId, x, y));
+        channelIds.push(channelId);
+        datastore.update({ key: datastore.key(["Game", 0]), data: channelIds });
+        datastore.save({ key: datastore.key(["Game", game.channelId]), data: game });
+        game.id++;
+        if (game.id > 7) {
+            game.gameRunning = true;
+        }
+        saveGame();
+        responce.game = game;
+    }
+    return responce;
 }
 
+function containsUser(game, userId) {
+    game.users.forEach((user) => {
+        if (user.userId == userId) {
+            return true;
+        }
+    });
+    return false;
+}
+function createGame(channelId) {
+    return {
+        "users": [], "channelId": channelId, "id": 7, "gameRunning": false, "boardSize": 32
+    }
+}
+
+function createUser(id, name, playerId, x, y) {
+    var user = {
+        "id": id,
+        "color": {
+        },
+        "name": name,
+        "x": x,
+        "y": y,
+        "actionPoints": 1,
+        "hour": 0,
+        "health": 3,
+        "lastAttack": 0,
+        "accuracy": 80,
+        "playerId": playerId
+    }
+
+    if (playerId == 0) {
+        user.color.emote = ":blue_circle:";
+        user.color.color = "#00eeff";
+    } else if (playerId == 1) {
+        user.color.emote = ":brown_circle:";
+        user.color.color = "#4a2d2d";
+    } else if (playerId == 2) {
+        user.color.emote = ":green_circle:";
+        user.color.color = "#22ff00";
+    } else if (playerId == 3) {
+        user.color.emote = ":orange_circle:";
+        user.color.color = "#b300ff";
+    } else if (playerId == 4) {
+        user.color.emote = ":purple_circle:";
+        user.color.color = "#b300ff";
+    } else if (playerId == 5) {
+        user.color.emote = ":red_circle:";
+        user.color.color = "#ff0000";
+    } else if (playerId == 6) {
+        user.color.emote = ":yellow_circle:";
+        user.color.color = "#ffea00";
+    } else if (playerId == 7) {
+        user.color.emote = ":white_circle:";
+        user.color.color = "#ffffff";
+    }
+
+    return user;
+}
 
 function saveGame(game) {
-
+    var channelIds = getAllChannels();
+    datastore.update({ key: datastore.key(["Game", 0]), data: channelIds });
+    datastore.update({ key: datastore.key(["Game", game.channelId]), data: game });
 }
+function getAllChannels() {
+    var channelids = [];
+    games.forEach((game) => { channelids.push(game.channelId)});
+}
+
