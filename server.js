@@ -168,7 +168,7 @@ app.get('/join', (req, res) => {
 });
 
 app.get('/move', (req, res) => {
-    res.send(UpdateGameMovement(getGameById(req.query.channelId), req.query.userId, req.query.id));
+    res.send(UpdateGameMovement(getGameById(req.query.channelId), req.query.userId, req.query.move,req.query.id));
 });
 
 app.get('/image', (req, res) => {
@@ -357,9 +357,12 @@ function UpdateGameMovement(game, userId, move, id) {
         responce.message = "You need to wait for more players.";
     }
 
-    if (responce.code != 405) {
+    if (responce.code == 200) {
         responce.game = game;
         saveGame(game);
+    }
+    if (responce.code == 100) {
+        datastore.delete(datastore.key(["Game", game.channelId])).then((responce) => { console.log(responce); });
     }
     return responce;
 }
