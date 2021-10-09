@@ -130,7 +130,7 @@ var testGameData = {
     "boardSize": 32
 };
 
-games.push(testGameData);
+
 
 // Instantiate a datastore client
 const datastore = new Datastore();
@@ -140,7 +140,7 @@ const app = express();
 
 datastore.get(datastore.key(["Game", 0]), function (err, entity) {
     if (typeof entity !== 'undefined') {
-        var channelIds = entity;
+        var channelIds = entity.channelId;
         channelIds.forEach((channelId) => {
             datastore.get(datastore.key(["Game", channelId]), function (err, entity) {
                 if (typeof entity !== 'undefined') {
@@ -465,9 +465,11 @@ function createUser(id, name, playerId, x, y) {
     return user;
 }
 
+
+
 function saveGame(game) {
     var channelIds = getAllChannels();
-    datastore.update({ key: datastore.key(["Game", 0]), data: channelIds });
+    datastore.update({ key: datastore.key(["Game", 0]), data: { "channelId": channelIds } });
     datastore.update({ key: datastore.key(["Game", game.channelId]), data: game });
 }
 function getAllChannels() {
