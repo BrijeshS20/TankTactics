@@ -1,9 +1,6 @@
-const express = require('express');
-const path = require('path');
+
 const { createCanvas } = require('canvas');
 
-const app = express();
-const port = process.env.PORT || '80';
 var games = [];
 
 var testGameData = {
@@ -138,35 +135,39 @@ var testGameData = {
 };
 
 games.push(testGameData);
+const express = require('express');
+const path = require('path');
+
+const app = express();
 
 
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
-app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/api', (req, res) => {
-    res.render(
-        'index',
-        {
-            title: 'Coming Soon!',
-        }
-    );
+app.use(express.static(path.resolve(path.join(__dirname, '/public'))));
+
+app.get('/', (req, res) => {
+
 });
 
+app.get('/data', (req, res) => {
+    res.send(JSON.stringify(testGameData));
+});
+
+app.get('/move', (req, res) => {
+    res.send(JSON.stringify(testGameData));
+});
 
 app.get('/image', (req, res) => {
-    res.render(
-        'index',
-        {
-            title: 'Coming Soon!',
-        }
-    );
+    res.send(JSON.stringify(testGameData));
 });
 
-app.listen(port, () => {
-    console.log(`Listening to requests on http://localhost:${port}`);
+app.get('/games', (req, res) => {
+    res.send(JSON.stringify(testGameData));
 });
-
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+    console.log(`App listening on port ${PORT}`);
+    console.log('Press Ctrl+C to quit.');
+});
 
 
 function getGameById(channelId) {

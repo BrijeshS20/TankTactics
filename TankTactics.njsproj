@@ -11,7 +11,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>b43bb38e-ca00-4ee3-8ea1-2f78256dc476</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>app.js</StartupFile>
+    <StartupFile>server.js</StartupFile>
     <StartWebBrowser>False</StartWebBrowser>
     <SearchPath>
     </SearchPath>
@@ -28,11 +28,11 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="app.js" />
     <Content Include="app.yaml" />
     <Content Include="package.json" />
     <Content Include="public\index.html" />
     <Content Include="README.md" />
+    <Content Include="server.js" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="public\" />

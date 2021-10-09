@@ -23,5 +23,8 @@ handlers:
 - url: /
   upload: public/index.html
   static_files: public/index.html
+- url: /.*
+  script: auto
+
 
 # [END app_yaml]
