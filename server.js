@@ -162,7 +162,7 @@ const oauth = new DiscordOauth2({
     clientId: cfg.id,
     clientSecret: cfg.secert,
 
-    redirectUri: "http://localhost:8080/authorize",
+    redirectUri: "https://tanktactics.uc.r.appspot.com/authorize",
 });
 
 app.get('/authorize', (req, res) => {
