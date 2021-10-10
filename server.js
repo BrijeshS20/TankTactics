@@ -138,7 +138,7 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-datastore.get(datastore.key(["Game", 0]), function (err, entity) {
+datastore.get(datastore.key(["Game","save"]), function (err, entity) {
     if (typeof entity !== 'undefined') {
         var channelIds = entity.channelId;
         channelIds.forEach((channelId) => {
@@ -376,20 +376,18 @@ function UpdateGameMovement(game, userId, move, id) {
 }
 
 function join(channelId, userId, name) {
-    console.log(channelId+" "+userId+" "+name);
     var responce = { code: 200, message: name+" has joined." , game: null };
     var channelIds = getAllChannels();
     console.log(channelIds);
     if (channelIds.includes(channelId)) {
         var game = getGameById(channelId);
-        console.log(game);
         if (containsUser(game, userId)) {
             responce.code = 405;
             responce.message = "U can join only once.";
         } else {
-            var x = Math.round(Math.random * game.boardSize);
-            var y = Math.round(Math.random * game.boardSize);
-            game.users.push(createUser(userId, name, game.playerId, x, y));
+            var x = Math.round(Math.random() * game.boardSize);
+            var y = Math.round(Math.random() * game.boardSize);
+            game.users.push(createUser(userId, name, game.id, x, y));
             game.id++;
             if (game.id > 7) {
                 game.gameRunning = true;
@@ -400,33 +398,33 @@ function join(channelId, userId, name) {
     
     } else {
         var game = createGame(channelId);
-        var x = Math.round(Math.random * game.boardSize);
-        var y = Math.round(Math.random * game.boardSize);
-        game.users.push(createUser(userId, name, game.playerId, x, y));
-        channelIds.push(channelId);
-        datastore.update({ key: datastore.key(["Game", 0]), data: channelIds });
-        datastore.save({ key: datastore.key(["Game", game.channelId]), data: game });
+        var x = Math.round(Math.random() * game.boardSize);
+        var y = Math.round(Math.random() * game.boardSize);
+        game.users.push(createUser(userId, name, game.id, x, y));
+        games.push(game);
         game.id++;
+        saveGame(game);
         if (game.id > 7) {
             game.gameRunning = true;
         }
-        saveGame(game);
+
         responce.game = game;
     }
     return responce;
 }
 
 function containsUser(game, userId) {
+    var userThere = false;
     game.users.forEach((user) => {
-        if (user.userId == userId) {
-            return true;
+        if (user.id == userId) {
+            userThere= true;
         }
     });
-    return false;
+    return userThere;
 }
 function createGame(channelId) {
     return {
-        "users": [], "channelId": channelId, "id": 7, "gameRunning": false, "boardSize": 32
+        "users": [], "channelId": channelId, "id": 0, "gameRunning": false, "boardSize": 32
     }
 }
 
@@ -434,6 +432,8 @@ function createUser(id, name, playerId, x, y) {
     var user = {
         "id": id,
         "color": {
+            "emote": "",
+            "color":""
         },
         "name": name,
         "x": x,
@@ -443,9 +443,9 @@ function createUser(id, name, playerId, x, y) {
         "health": 3,
         "lastAttack": 0,
         "accuracy": 80,
-        "playerId": playerId
+        "playerId": playerId,
     }
-
+    console.log(playerId);
     if (playerId == 0) {
         user.color.emote = ":blue_circle:";
         user.color.color = "#00eeff";
@@ -478,9 +478,10 @@ function createUser(id, name, playerId, x, y) {
 
 
 function saveGame(game) {
+    console.log(game);
     var channelIds = getAllChannels();
-    datastore.update({ key: datastore.key(["Game", 0]), data: { "channelId": channelIds } });
-    datastore.update({ key: datastore.key(["Game", game.channelId]), data: game });
+    datastore.save({ key: datastore.key(["Game", "save"]), data: { "channelId": channelIds } });
+    datastore.save({ key: datastore.key(["Game", game.channelId]), data: game });
 }
 function getAllChannels() {
     var channelids = [];
