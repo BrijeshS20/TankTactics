@@ -184,20 +184,6 @@ app.get('/user', (req, res) => {
 
 });
 
-app.get('/authorize', (req, res) => {
-
-    oauth.tokenRequest({
-        code: req.query.code,
-        scope: 'identify email',
-        grantType: 'authorization_code',
-    }).then(code => {
-        res.send(code);
-    }).catch((e) => {
-        console.log(e.message)
-        console.log(e.response)
-    });
-
-});
 
 
 app.get('/data', (req, res) => {
