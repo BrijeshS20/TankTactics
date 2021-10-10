@@ -153,6 +153,7 @@ datastore.get(datastore.key(["Game", 0]), function (err, entity) {
 
 app.use(express.static(path.resolve(path.join(__dirname, '/public'))));
 
+games.push(testGameData);
 app.get('/', (req, res) => {
 
 });
@@ -163,7 +164,8 @@ app.get('/data', (req, res) => {
 });
 
 app.get('/join', (req, res) => {
-    res.send(join(req.query.channelId, req.query.userId, req.name));
+    console.log(req.query);
+    res.send(join(req.query.channelId, req.query.userId, req.query.name));
 
 });
 
@@ -191,13 +193,19 @@ function getGames(userId) {
 
 }
 function getGameById(channelId) {
-    channelId = Number.parseInt(channelId);
-    games.forEach(function (game) { if (game.channelId == channelId) { return game; } });
-
+    var gameToReturn;
+    games.forEach(function (game) {
+        console.log(game.channelId + " " + channelId + " " + (game.channelId == channelId));
+        if (game.channelId == channelId) {
+            gameToReturn= game;
+        }
+    });
+    return gameToReturn;
 }
 function getUserById(game, userId) {
-
-    game.users.forEach(function (user) { if (userId == user.id) { return user; } });
+    var userToReturn;
+    game.users.forEach(function (user) { if (userId == user.id) { userToReturn = user; } });
+    return userToReturn;
 }
 
 function DrawNodeJS(game) {
@@ -368,11 +376,13 @@ function UpdateGameMovement(game, userId, move, id) {
 }
 
 function join(channelId, userId, name) {
-    channelId = Number.parseInt(channelId);
+    console.log(channelId+" "+userId+" "+name);
     var responce = { code: 200, message: name+" has joined." , game: null };
     var channelIds = getAllChannels();
-    if (channelIds.contains(channelId)) {
+    console.log(channelIds);
+    if (channelIds.includes(channelId)) {
         var game = getGameById(channelId);
+        console.log(game);
         if (containsUser(game, userId)) {
             responce.code = 405;
             responce.message = "U can join only once.";
@@ -474,6 +484,7 @@ function saveGame(game) {
 }
 function getAllChannels() {
     var channelids = [];
-    games.forEach((game) => { channelids.push(game.channelId)});
+    games.forEach((game) => { channelids.push(game.channelId) });
+    return channelids;
 }
 
