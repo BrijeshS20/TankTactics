@@ -394,7 +394,7 @@ function join(channelId, userId, name) {
             if (game.id > 7) {
                 game.gameRunning = true;
             }
-            saveGame();
+            saveGame(game);
             responce.game = game;
         }
     
@@ -410,7 +410,7 @@ function join(channelId, userId, name) {
         if (game.id > 7) {
             game.gameRunning = true;
         }
-        saveGame();
+        saveGame(game);
         responce.game = game;
     }
     return responce;
