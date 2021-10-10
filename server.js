@@ -4,8 +4,6 @@ const { createCanvas } = require('canvas');
 const { Datastore } = require('@google-cloud/datastore');
 
 const cfg = require('./cfg.json');
-const { get, post } = require('snekfetch');
-const btoa = require('btoa');
 var games = [];
 
 
@@ -139,8 +137,7 @@ const datastore = new Datastore();
 const express = require('express');
 const path = require('path');
 const app = express();
-
-datastore.get(datastore.key(["Game","save"]), function (err, entity) {
+datastore.get(datastore.key(["Game", "save"]), function (err, entity) {
     if (typeof entity !== 'undefined') {
         var channelIds = entity.channelId;
         channelIds.forEach((channelId) => {
@@ -156,19 +153,52 @@ datastore.get(datastore.key(["Game","save"]), function (err, entity) {
 app.use(express.static(path.resolve(path.join(__dirname, '/public'))));
 
 games.push(testGameData);
+
 app.get('/', (req, res) => {
 
 });
+const DiscordOauth2 = require("discord-oauth2");
+const oauth = new DiscordOauth2({
+    clientId: cfg.id,
+    clientSecret: cfg.secert,
 
-app.get('/login', (req, res) => {
-    res.redirect([
-        'https://discordapp.com/oauth2/authorize',
-        `?client_id=${cfg.id}`,
-        '&scope=identify+guilds',
-        '&response_type=code',
-        `&callback_uri=https://tanktactics.uc.r.appspot.com/authorize`
-    ].join(''));
+    redirectUri: "http://localhost:8080/authorize",
 });
+
+app.get('/authorize', (req, res) => {
+   
+    oauth.tokenRequest({
+        code: req.query.code,
+        scope: 'identify email',
+        grantType: 'authorization_code',
+    }).then(code => {
+        res.redirect('/user?code='+code.access_token);
+    }).catch((e) => {
+        console.log(e.message)
+        console.log(e.response)
+    });
+
+});
+app.get('/user', (req, res) => {
+    oauth.getUser(req.query.code).then((resp) => { res.redirect('/game.html?userId='+resp.id); });
+
+});
+
+app.get('/authorize', (req, res) => {
+
+    oauth.tokenRequest({
+        code: req.query.code,
+        scope: 'identify email',
+        grantType: 'authorization_code',
+    }).then(code => {
+        res.send(code);
+    }).catch((e) => {
+        console.log(e.message)
+        console.log(e.response)
+    });
+
+});
+
 
 app.get('/data', (req, res) => {
     res.send(getGameById(req.query.channelId));
@@ -182,7 +212,7 @@ app.get('/join', (req, res) => {
 });
 
 app.get('/move', (req, res) => {
-    res.send(UpdateGameMovement(getGameById(req.query.channelId), req.query.userId, req.query.move,req.query.id));
+    res.send(UpdateGameMovement(getGameById(req.query.channelId), req.query.userId, req.query.move, req.query.id));
 });
 
 app.get('/image', (req, res) => {
@@ -194,21 +224,6 @@ app.get('/games', (req, res) => {
     res.send(getGames(res.query.userId));
 });
 
-app.get('/authorize', (req, res) => {
-    const code = req.query.code;
-    const cred = btoa(`${cfg.id}:${cfg.secret}`);
-    post(`https://discordapp.com/api/oauth2/token?grant_type=authorization_code&code=${code}`)
-        .set('Authorization', `Basic ${cred}`)
-        .then(response => res.redirect(`/guilds?token=${response.body.access_token}`))
-        .catch(console.error);
-});
-
-app.get('/guilds', (req, res) => {
-    get('https://discordapp.com/api/v6/users/@me/guilds')
-        .set('Authorization', `Bearer ${req.query.token}`)
-        .then(response => res.json(response.body))
-        .catch(console.error);
-});
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
@@ -227,7 +242,7 @@ function getGameById(channelId) {
     games.forEach(function (game) {
         console.log(game.channelId + " " + channelId + " " + (game.channelId == channelId));
         if (game.channelId == channelId) {
-            gameToReturn= game;
+            gameToReturn = game;
         }
     });
     return gameToReturn;
@@ -405,8 +420,8 @@ function UpdateGameMovement(game, userId, move, id) {
     return responce;
 }
 
-function join(channelId, userId, name,channelName,serverName) {
-    var responce = { code: 200, message: name+" has joined." , game: null };
+function join(channelId, userId, name, channelName, serverName) {
+    var responce = { code: 200, message: name + " has joined.", game: null };
     var channelIds = getAllChannels();
     console.log(channelIds);
     if (channelIds.includes(channelId)) {
@@ -425,7 +440,7 @@ function join(channelId, userId, name,channelName,serverName) {
             saveGame(game);
             responce.game = game;
         }
-    
+
     } else {
         var game = createGame(channelId, channelName, serverName);
         var x = Math.round(Math.random() * game.boardSize);
@@ -447,12 +462,12 @@ function containsUser(game, userId) {
     var userThere = false;
     game.users.forEach((user) => {
         if (user.id == userId) {
-            userThere= true;
+            userThere = true;
         }
     });
     return userThere;
 }
-function createGame(channelId,channelName,serverName) {
+function createGame(channelId, channelName, serverName) {
     return {
         "users": [], "channelId": channelId, "id": 0, "gameRunning": false, "channelName": channelName, "serverName": serverName, "boardSize": 32
     }
@@ -463,7 +478,7 @@ function createUser(id, name, playerId, x, y) {
         "id": id,
         "color": {
             "emote": "",
-            "color":""
+            "color": ""
         },
         "name": name,
         "x": x,
