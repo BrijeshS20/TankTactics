@@ -131,7 +131,7 @@ var testGameData = {
 };
 
 
-
+var previousAction = [];
 // Instantiate a datastore client
 const datastore = new Datastore();
 const express = require('express');
@@ -193,12 +193,27 @@ app.get('/data', (req, res) => {
 
 app.get('/join', (req, res) => {
     console.log(req.query);
-    res.send(join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName));
+    var action = join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName);
+    var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
+    previousAction.push(actionSave);
+    res.send(action);
 
 });
 
+app.get('/bot', (req, res) => {
+    if (req.query.key == bot) {
+        var actions = previousAction;
+        previousAction = [];
+        res.send(actions);
+    }
+});
+
+
 app.get('/move', (req, res) => {
-    res.send(UpdateGameMovement(getGameById(req.query.channelId), req.query.userId, req.query.move, req.query.id));
+    var action = UpdateGameMovement(getGameById(req.query.channelId), req.query.userId, req.query.move, req.query.id);
+    var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
+    previousAction.push(actionSave);
+    res.send(action);
 });
 
 app.get('/image', (req, res) => {
@@ -481,8 +496,8 @@ function createUser(id, name, playerId, x, y) {
         user.color.emote = ":blue_circle:";
         user.color.color = "#00eeff";
     } else if (playerId == 1) {
-        user.color.emote = ":brown_circle:";
-        user.color.color = "#4a2d2d";
+        user.color.emote = ":black_circle:";
+        user.color.color = "#000000";
     } else if (playerId == 2) {
         user.color.emote = ":green_circle:";
         user.color.color = "#22ff00";
