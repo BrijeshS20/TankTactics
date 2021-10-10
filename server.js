@@ -3,7 +3,9 @@ const { createCanvas } = require('canvas');
 
 const { Datastore } = require('@google-cloud/datastore');
 
-
+const cfg = require('./cfg.json');
+const { get, post } = require('snekfetch');
+const btoa = require('btoa');
 var games = [];
 
 
@@ -158,6 +160,16 @@ app.get('/', (req, res) => {
 
 });
 
+app.get('/login', (req, res) => {
+    res.redirect([
+        'https://discordapp.com/oauth2/authorize',
+        `?client_id=${cfg.id}`,
+        '&scope=identify+guilds',
+        '&response_type=code',
+        `&callback_uri=https://tanktactics.uc.r.appspot.com/authorize`
+    ].join(''));
+});
+
 app.get('/data', (req, res) => {
     res.send(getGameById(req.query.channelId));
 
@@ -165,7 +177,7 @@ app.get('/data', (req, res) => {
 
 app.get('/join', (req, res) => {
     console.log(req.query);
-    res.send(join(req.query.channelId, req.query.userId, req.query.name));
+    res.send(join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName));
 
 });
 
@@ -174,12 +186,30 @@ app.get('/move', (req, res) => {
 });
 
 app.get('/image', (req, res) => {
-    res.send(DrawNodeJS(getGameById(req.query.channelId)));
+    res.setHeader('Content-Type', 'image/png');
+    DrawNodeJS(getGameById(req.query.channelId)).pngStream().pipe(res);
 });
 
 app.get('/games', (req, res) => {
     res.send(getGames(res.query.userId));
 });
+
+app.get('/authorize', (req, res) => {
+    const code = req.query.code;
+    const cred = btoa(`${cfg.id}:${cfg.secret}`);
+    post(`https://discordapp.com/api/oauth2/token?grant_type=authorization_code&code=${code}`)
+        .set('Authorization', `Basic ${cred}`)
+        .then(response => res.redirect(`/guilds?token=${response.body.access_token}`))
+        .catch(console.error);
+});
+
+app.get('/guilds', (req, res) => {
+    get('https://discordapp.com/api/v6/users/@me/guilds')
+        .set('Authorization', `Bearer ${req.query.token}`)
+        .then(response => res.json(response.body))
+        .catch(console.error);
+});
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`App listening on port ${PORT}`);
@@ -230,7 +260,7 @@ function DrawNodeJS(game) {
         context.fillStyle = user.color.color;
         context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
     });
-    return canvas.toBuffer();
+    return canvas;
 
 }
 
@@ -375,7 +405,7 @@ function UpdateGameMovement(game, userId, move, id) {
     return responce;
 }
 
-function join(channelId, userId, name) {
+function join(channelId, userId, name,channelName,serverName) {
     var responce = { code: 200, message: name+" has joined." , game: null };
     var channelIds = getAllChannels();
     console.log(channelIds);
@@ -397,7 +427,7 @@ function join(channelId, userId, name) {
         }
     
     } else {
-        var game = createGame(channelId);
+        var game = createGame(channelId, channelName, serverName);
         var x = Math.round(Math.random() * game.boardSize);
         var y = Math.round(Math.random() * game.boardSize);
         game.users.push(createUser(userId, name, game.id, x, y));
@@ -422,9 +452,9 @@ function containsUser(game, userId) {
     });
     return userThere;
 }
-function createGame(channelId) {
+function createGame(channelId,channelName,serverName) {
     return {
-        "users": [], "channelId": channelId, "id": 0, "gameRunning": false, "boardSize": 32
+        "users": [], "channelId": channelId, "id": 0, "gameRunning": false, "channelName": channelName, "serverName": serverName, "boardSize": 32
     }
 }
 

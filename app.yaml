@@ -23,6 +23,9 @@ handlers:
 - url: /
   upload: public/index.html
   static_files: public/index.html
+- url: /game.html
+  upload: public/game.html
+  static_files: public/game.html
 - url: /.*
   script: auto
 
