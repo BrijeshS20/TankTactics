@@ -4,139 +4,27 @@ const { createCanvas } = require('canvas');
 const { Datastore } = require('@google-cloud/datastore');
 
 const cfg = require('./cfg.json');
-var games = [];
 
-
-
-var testGameData = {
-    "users": [
-        {
-            "id": "794921502230577182",
-            "color": {
-                "color": "#ffffff",
-                "emote": ":white_circle:"
-            },
-            "name": "deepparag",
-            "x": 21,
-            "y": 18,
-            "actionPoints": 3,
-            "hour": 3,
-            "health": 3,
-            "lastAttack": 0,
-            "accuracy": 80,
-            "playerId": 0
-        },
-        {
-            "id": "875042500056862721",
-            "color": {
-                "color": "#0015ff",
-                "emote": ":blue_circle:"
-            },
-            "name": "Definitely not a Muse",
-            "x": 7,
-            "y": 30,
-            "actionPoints": 6,
-            "hour": 3,
-            "health": 3,
-            "lastAttack": 0,
-            "accuracy": 80,
-            "playerId": 1
-        },
-        {
-            "id": "792002811583266856",
-            "color": {
-                "color": "#701420",
-                "emote": ":brown_circle:"
-            },
-            "name": "DaWise_Weirdo",
-            "x": 17,
-            "y": 22,
-            "actionPoints": 3,
-            "hour": 2,
-            "health": 3,
-            "lastAttack": 0,
-            "accuracy": 80,
-            "playerId": 2
-        },
-        {
-            "id": "819805772522324008",
-            "color": {
-                "color": "#00a80e",
-                "emote": ":green_circle:"
-            },
-            "name": "Yelena",
-            "x": 21,
-            "y": 23,
-            "actionPoints": 5,
-            "hour": 6,
-            "health": 3,
-            "lastAttack": 0,
-            "accuracy": 80,
-            "playerId": 3
-        },
-        {
-            "id": "762366471371751455",
-            "color": {
-                "color": "#ff6f00",
-                "emote": ":orange_circle:"
-            },
-            "name": "notalivehuman",
-            "x": 28,
-            "y": 23,
-            "actionPoints": 4,
-            "hour": 0,
-            "health": 3,
-            "lastAttack": 0,
-            "accuracy": 80,
-            "playerId": 4
-        },
-        {
-            "id": "840322628807163984",
-            "color": {
-                "color": "#3f00a3",
-                "emote": ":purple_circle:"
-            },
-            "name": "????",
-            "x": 10,
-            "y": 23,
-            "actionPoints": 5,
-            "hour": 1,
-            "health": 3,
-            "lastAttack": 0,
-            "accuracy": 80,
-            "playerId": 5
-        },
-        {
-            "id": "766162972014805023",
-            "color": {
-                "color": "#ff2f00",
-                "emote": ":red_circle:"
-            },
-            "name": "natasha",
-            "x": 7,
-            "y": 14,
-            "actionPoints": 7,
-            "hour": 2,
-            "health": 3,
-            "lastAttack": 0,
-            "accuracy": 80,
-            "playerId": 6
-        }
-
-    ],
-    "channelId": "892972590447087618",
-    "id": 7,
-    "gameRunning": true,
-    "boardSize": 32
-};
-
-
-var previousAction = [];
-// Instantiate a datastore client
-const datastore = new Datastore();
+const DiscordOauth2 = require("discord-oauth2");
 const express = require('express');
 const path = require('path');
+
+const oauth = new DiscordOauth2({
+    clientId: cfg.id,
+    clientSecret: cfg.secert,
+
+    redirectUri: "https://tanktactics.uc.r.appspot.com/authorize",
+});
+// Instantiate a datastore client
+const datastore = new Datastore();
+
 const app = express();
+
+var previousAction = [];
+
+var games = [];
+
+//datastore
 datastore.get(datastore.key(["Game", "save"]), function (err, entity) {
     if (typeof entity !== 'undefined') {
         var channelIds = entity.channelId;
@@ -151,41 +39,32 @@ datastore.get(datastore.key(["Game", "save"]), function (err, entity) {
     }
 });
 
+//apis
 app.use(express.static(path.resolve(path.join(__dirname, '/public'))));
-
-games.push(testGameData);
-
 app.get('/', (req, res) => {
 
 });
-const DiscordOauth2 = require("discord-oauth2");
-const oauth = new DiscordOauth2({
-    clientId: cfg.id,
-    clientSecret: cfg.secert,
-
-    redirectUri: "https://tanktactics.uc.r.appspot.com/authorize",
-});
 
 app.get('/authorize', (req, res) => {
-   
+
     oauth.tokenRequest({
         code: req.query.code,
         scope: 'identify email',
         grantType: 'authorization_code',
     }).then(code => {
-        res.redirect('/user?code='+code.access_token);
+        res.redirect('/user?code=' + code.access_token);
     }).catch((e) => {
     });
 
 });
 app.get('/user', (req, res) => {
-    oauth.getUser(req.query.code).then((resp) => { res.redirect('/game.html?userId='+resp.id); });
+    oauth.getUser(req.query.code).then((resp) => { res.redirect('/game.html?userId=' + resp.id); });
 });
 
 
 
 app.get('/data', (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin","*").send(getGameById(req.query.channelId));
+    res.setHeader("Access-Control-Allow-Origin", "*").send(getGameById(req.query.channelId));
 });
 
 app.get('/join', (req, res) => {
@@ -221,271 +100,34 @@ app.get('/games', (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*").send(getGames(res.query.userId));
 });
 
-
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
 });
 
-function callEveryHour() {
-
-    setInterval(calculateActionPoints(), 1000 * 60 * 60);
-}
-
 function calculateActionPoints() {
     games.forEach(game => {
-        game.users.forEach(user => {
-            if (game.gameRunning) {
+        if (game.gameRunning) {
+            game.users.forEach(user => {
+
                 user.hour++;
                 if ((Math.random() * 24) < user.hour) {
                     user.hour = 0;
                     user.actionPoints++;
                     previousAction.push({ "code": 200, "message": user.name + " has gotten an action point.", "channelId": game.channelId })
                 };
-            }
-        });
-        saveGame(game);
-    });
-}
-function getGames(userId) {
-    var lobbies = [];
-    games.forEach(function (game) { if (containsUser(game, userId)) { lobbies.push({ "channelId": game.channelId, "channelnName": game.channelName, "serverName": game.serverName }); } });
-    return lobbies;
 
-}
-function getGameById(channelId) {
-    var gameToReturn;
-    games.forEach(function (game) {
-        if (game.channelId == channelId) {
-            gameToReturn = game;
-        }
-    });
-    return gameToReturn;
-}
-function getUserById(game, userId) {
-    var userToReturn;
-    game.users.forEach(function (user) { if (userId == user.id) { userToReturn = user; } });
-    return userToReturn;
-}
-
-function DrawNodeJS(game) {
-    const width = game.boardSize * 2 * 10 + 10;
-    const height = game.boardSize * 2 * 10 + 10;
-
-    const canvas = createCanvas(width, height);
-    const context = canvas.getContext('2d');
-
-    context.fillStyle = '#343a40';
-    context.fillRect(0, 0, width, height)
-
-    context.fillStyle = '#a39c93';
-    for (var x = 0; x < game.boardSize; x++) {
-
-        for (var y = 0; y < game.boardSize; y++) {
-            context.fillRect(x * 20 + 10, y * 20 + 10, 10, 10);
-        }
-
-    }
-    game.users.forEach((user) => {
-        context.fillStyle = user.color.color;
-        context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
-    });
-    return canvas;
-
-}
-
-
-function UpdateGameMovement(game, userId, move, id) {
-    userId = Number(userId);
-    id = Number(id);
-    var user = getUserById(game, userId);
-    var responce = { code: 200, message: "", game: null };
-    if (game.gameRunning) {
-        if (user.actionPoints > 0) {
-            if (move.toLowerCase() == "up") {
-
-                if (user.y > 0) {
-                    user.y--;
-                    responce.message = user.name + " has moved";
-                } else {
-                    responce.code = 405;
-                    responce.message = "Reached edge of Map";
-                }
-
-            }
-            if (move.toLowerCase() == "down") {
-                if (user.y < game.boardSize - 1) {
-                    user.y++;
-                    responce.message = user.name + " has moved";
-                } else {
-                    responce.code = 405;
-                    responce.message = "Reached edge of Map";
-                }
-            }
-            if (move.toLowerCase() == "right") {
-                var user = getUserById(game, userId);
-                if (user.x < game.boardSize - 1) {
-                    user.x++;
-                    responce.message = user.name + " has moved";
-                } else {
-                    responce.code = 405;
-                    responce.message = "Reached edge of Map";
-                }
-            }
-            if (move.toLowerCase() == "left") {
-                var user = getUserById(game, userId);
-                if (user.x > 0) {
-                    user.x--;
-                    responce.message = user.name + " has moved";
-                } else {
-                    responce.code = 405;
-                    responce.message = "Reached edge of Map";
-                }
-            }
-            if (move.toLowerCase() == "attack") {
-                var user = getUserById(game, userId);
-                if (Date.now > user.lastAttack + 1000 * 60 * 15) {
-                    var enemy = getUserById(game, id);
-                    if (typeof enemy != "undefined") {
-
-                        if (enemy.health > 0) {
-                            if (enemy.x == user.x || enemy.y == user.y) {
-                                if (Math.random() * 100 < user.accuracy) {
-                                    enemy.health--;
-                                    if (enemy.health == 0) {
-                                        responce.message = user.name + " has killed" + enemy.name;
-                                        var lastPersonAlive = true;
-                                        game.users.forEach(function (user) {
-                                            if (user.health > 0) {
-                                                lastPersonAlive = false;
-                                            }
-                                        });
-                                        if (!lastPersonAlive) {
-                                            responce.code = 100;
-                                            responce.message = user.name + " has Won the game by killing " + enemy.name;
-                                        }
-                                    } else {
-                                        responce.message = user.name + " has attacked " + enemy.name;
-                                    }
-                                } else {
-                                    responce.message = user.name + " has tried to attack " + enemy.name;
-                                }
-                            } else {
-                                responce.code = 405;
-                                responce.message = "The player is neither horitontaly or vertically same to u.";
-                            }
-                        } else {
-                            responce.code = 405;
-                            responce.message = "You cant kill dead players";
-                        }
-                    } else {
-                        responce.code = 405;
-                        responce.message = "No such user.";
-                    }
-                } else {
-                    responce.code = 405;
-                    responce.message = "Please wait before attacking again.";
-                }
-            }
-            if (move.toLowerCase() == "give") {
-
-                var enemy = getUserById(game, id);
-                if (typeof enemy != "undefined") {
-
-                    if (enemy.health > 0) {
-                        enemy.actionPoints++;
-                        responce.message = user.name + " has given his action points to " + enemy.name;
-                    } else {
-                        responce.code = 405;
-                        responce.message = "You cant give to dead players";
-                    }
-                } else {
-                    responce.code = 405;
-                    responce.message = "No such user.";
-                }
-
-            }
-            if (move.toLowerCase() == "upgrade") {
-                if (user.accuracy < 100) {
-                    user.accuracy = user.accuracy + 4;
-                    responce.message = user.name = " increased their accuracy from " + (user.accuracy - 4) + " to " + user.accuracy;
-                } else {
-                    responce.code = 405;
-                    responce.message = "Your accuracy is max.";
-                }
-            }
-            user.actionPoints--;
-        } else {
-            responce.code = 405;
-            responce.message = "You need more action points!!";
-        }
-
-    } else {
-        responce.code = 405;
-        responce.message = "You need to wait for more players.";
-    }
-
-    if (responce.code == 200) {
-        responce.game = game;
-        saveGame(game);
-    }
-    if (responce.code == 100) {
-        datastore.delete(datastore.key(["Game", game.channelId])).then((responce) => {  });
-    }
-    return responce;
-}
-
-function join(channelId, userId, name, channelName, serverName) {
-    var responce = { code: 200, message: name + " has joined.", game: null };
-    var channelIds = getAllChannels();
-    if (channelIds.includes(channelId)) {
-        var game = getGameById(channelId);
-        if (containsUser(game, userId)) {
-            responce.code = 405;
-            responce.message = "U can join only once.";
-        } else {
-            var x = Math.round(Math.random() * game.boardSize);
-            var y = Math.round(Math.random() * game.boardSize);
-            game.users.push(createUser(userId, name, game.id, x, y));
-            game.id++;
-            if (game.id > 7) {
-                game.gameRunning = true;
-            }
+            });
             saveGame(game);
-            responce.game = game;
-        }
-
-    } else {
-        var game = createGame(channelId, channelName, serverName);
-        var x = Math.round(Math.random() * game.boardSize);
-        var y = Math.round(Math.random() * game.boardSize);
-        game.users.push(createUser(userId, name, game.id, x, y));
-        games.push(game);
-        game.id++;
-        saveGame(game);
-        if (game.id > 7) {
-            game.gameRunning = true;
-        }
-
-        responce.game = game;
-    }
-    return responce;
-}
-
-function containsUser(game, userId) {
-    var userThere = false;
-    game.users.forEach((user) => {
-        if (user.id == userId) {
-            userThere = true;
         }
     });
-    return userThere;
-}
-function createGame(channelId, channelName, serverName) {
-    return {
-        "users": [], "channelId": channelId, "id": 0, "gameRunning": false, "channelName": channelName, "serverName": serverName, "boardSize": 32
-    }
 }
 
+function callEveryHour() {
+
+    setInterval(calculateActionPoints, 1000 * 60 * 60);
+}
+
+//Users functions
 function createUser(id, name, playerId, x, y) {
     var user = {
         "id": id,
@@ -533,15 +175,264 @@ function createUser(id, name, playerId, x, y) {
 }
 
 
+function getUserById(game, userId) {
+    var userToReturn;
+    game.users.forEach(function (user) { if (userId == user.id) { userToReturn = user; } });
+    return userToReturn;
+}
+
+function containsUser(game, userId) {
+    var userThere = false;
+    game.users.forEach((user) => {
+        if (user.id == userId) {
+            userThere = true;
+        }
+    });
+    return userThere;
+}
+//Game Function
+function createGame(channelId, channelName, serverName) {
+    return {
+        "users": [], "channelId": channelId, "id": 0, "gameRunning": false, "channelName": channelName, "serverName": serverName, "boardSize": 32
+    }
+}
 
 function saveGame(game) {
     var channelIds = getAllChannels();
     datastore.save({ key: datastore.key(["Game", "save"]), data: { "channelId": channelIds } });
     datastore.save({ key: datastore.key(["Game", game.channelId]), data: game });
 }
+
+
+function getGameById(channelId) {
+    var gameToReturn;
+    games.forEach(function (game) {
+        if (game.channelId == channelId) {
+            gameToReturn = game;
+        }
+    });
+    return gameToReturn;
+}
+
+
+//channels
 function getAllChannels() {
     var channelids = [];
     games.forEach((game) => { channelids.push(game.channelId) });
     return channelids;
 }
 
+
+
+//API main function
+function getGames(userId) {
+    var lobbies = [];
+    games.forEach(function (game) { if (containsUser(game, userId)) { lobbies.push({ "channelId": game.channelId, "channelnName": game.channelName, "serverName": game.serverName }); } });
+    return lobbies;
+
+}
+
+
+function DrawNodeJS(game) {
+    const width = game.boardSize * 2 * 10 + 10;
+    const height = game.boardSize * 2 * 10 + 10;
+
+    const canvas = createCanvas(width, height);
+    const context = canvas.getContext('2d');
+
+    context.fillStyle = '#343a40';
+    context.fillRect(0, 0, width, height)
+
+    context.fillStyle = '#a39c93';
+    for (var x = 0; x < game.boardSize; x++) {
+
+        for (var y = 0; y < game.boardSize; y++) {
+            context.fillRect(x * 20 + 10, y * 20 + 10, 10, 10);
+        }
+
+    }
+    game.users.forEach((user) => {
+        context.fillStyle = user.color.color;
+        context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
+    });
+    return canvas;
+
+}
+
+
+function UpdateGameMovement(game, userId, move, id) {
+    userId = Number(userId);
+    id = Number(id);
+    var user = getUserById(game, userId);
+    var response = { code: 200, message: "", game: null };
+    if (game.gameRunning) {
+        if (user.actionPoints > 0) {
+            if (move.toLowerCase() == "up") {
+
+                if (user.y > 0) {
+                    user.y--;
+                    response.message = user.name + " has moved";
+                } else {
+                    response.code = 405;
+                    response.message = "Reached edge of Map";
+                }
+
+            }
+            if (move.toLowerCase() == "down") {
+                if (user.y < game.boardSize - 1) {
+                    user.y++;
+                    response.message = user.name + " has moved";
+                } else {
+                    response.code = 405;
+                    response.message = "Reached edge of Map";
+                }
+            }
+            if (move.toLowerCase() == "right") {
+                var user = getUserById(game, userId);
+                if (user.x < game.boardSize - 1) {
+                    user.x++;
+                    response.message = user.name + " has moved";
+                } else {
+                    response.code = 405;
+                    response.message = "Reached edge of Map";
+                }
+            }
+            if (move.toLowerCase() == "left") {
+                var user = getUserById(game, userId);
+                if (user.x > 0) {
+                    user.x--;
+                    response.message = user.name + " has moved";
+                } else {
+                    response.code = 405;
+                    response.message = "Reached edge of Map";
+                }
+            }
+            if (move.toLowerCase() == "attack") {
+                var user = getUserById(game, userId);
+                if (Date.now > user.lastAttack + 1000 * 60 * 15) {
+                    var enemy = getUserById(game, id);
+                    if (typeof enemy != "undefined") {
+
+                        if (enemy.health > 0) {
+                            if (enemy.x == user.x || enemy.y == user.y) {
+                                if (Math.random() * 100 < user.accuracy) {
+                                    enemy.health--;
+                                    if (enemy.health == 0) {
+                                        response.message = user.name + " has killed" + enemy.name;
+                                        var lastPersonAlive = true;
+                                        game.users.forEach(function (user) {
+                                            if (user.health > 0) {
+                                                lastPersonAlive = false;
+                                            }
+                                        });
+                                        if (!lastPersonAlive) {
+                                            response.code = 100;
+                                            response.message = user.name + " has Won the game by killing " + enemy.name;
+                                        }
+                                    } else {
+                                        response.message = user.name + " has attacked " + enemy.name;
+                                    }
+                                } else {
+                                    response.message = user.name + " has tried to attack " + enemy.name;
+                                }
+                            } else {
+                                response.code = 405;
+                                response.message = "The player is neither horitontaly or vertically same to u.";
+                            }
+                        } else {
+                            response.code = 405;
+                            response.message = "You cant kill dead players";
+                        }
+                    } else {
+                        response.code = 405;
+                        response.message = "No such user.";
+                    }
+                } else {
+                    response.code = 405;
+                    response.message = "Please wait before attacking again.";
+                }
+            }
+            if (move.toLowerCase() == "give") {
+
+                var enemy = getUserById(game, id);
+                if (typeof enemy != "undefined") {
+
+                    if (enemy.health > 0) {
+                        enemy.actionPoints++;
+                        response.message = user.name + " has given his action points to " + enemy.name;
+                    } else {
+                        response.code = 405;
+                        response.message = "You cant give to dead players";
+                    }
+                } else {
+                    response.code = 405;
+                    response.message = "No such user.";
+                }
+
+            }
+            if (move.toLowerCase() == "upgrade") {
+                if (user.accuracy < 100) {
+                    user.accuracy = user.accuracy + 4;
+                    response.message = user.name = " increased their accuracy from " + (user.accuracy - 4) + " to " + user.accuracy;
+                } else {
+                    response.code = 405;
+                    response.message = "Your accuracy is max.";
+                }
+            }
+            user.actionPoints--;
+        } else {
+            response.code = 405;
+            response.message = "You need more action points!!";
+        }
+
+    } else {
+        response.code = 405;
+        response.message = "You need to wait for more players.";
+    }
+
+    if (response.code == 200) {
+        response.game = game;
+        saveGame(game);
+    }
+    if (response.code == 100) {
+        datastore.delete(datastore.key(["Game", game.channelId])).then((responce) => { });
+    }
+    return response;
+}
+
+function join(channelId, userId, name, channelName, serverName) {
+    var response = { code: 200, message: name + " has joined.", game: null };
+    var channelIds = getAllChannels();
+    if (channelIds.includes(channelId)) {
+        var game = getGameById(channelId);
+        if (containsUser(game, userId)) {
+            response.code = 405;
+            response.message = "U can join only once.";
+        } else {
+            var x = Math.round(Math.random() * game.boardSize);
+            var y = Math.round(Math.random() * game.boardSize);
+            game.users.push(createUser(userId, name, game.id, x, y));
+            game.id++;
+            if (game.id > 7) {
+                game.gameRunning = true;
+            }
+            saveGame(game);
+            response.game = game;
+        }
+
+    } else {
+        var game = createGame(channelId, channelName, serverName);
+        var x = Math.round(Math.random() * game.boardSize);
+        var y = Math.round(Math.random() * game.boardSize);
+        game.users.push(createUser(userId, name, game.id, x, y));
+        games.push(game);
+        game.id++;
+        saveGame(game);
+        if (game.id > 7) {
+            game.gameRunning = true;
+        }
+
+        response.game = game;
+    }
+    return response;
+}

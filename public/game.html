@@ -60,31 +60,35 @@
             </div>
             <div id="help">
                 <h1>Help</h1>
-                <div id="help" class="carousel slide" data-bs-ride="help">
+                <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
                     <div class="carousel-indicators">
-                        <button type="button" data-bs-target="#help" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-                        <button type="button" data-bs-target="#help" data-bs-slide-to="1" aria-label="Slide 2"></button>
-                        <button type="button" data-bs-target="#help" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
                     </div>
                     <div class="carousel-inner">
-                        <div class="carousel-item active">
-                            Hello I will teach you how to play this game. First U must   <a class="nav-link" href="https://discord.com/api/oauth2/authorize?client_id=893072412558655558&permissions=2048&scope=bot%20applications.commands" target="_blank">Invite the bot</a>.<br />
-                            Then type !game in the chat.<br />
+                        <div class="carousel-item active ">
+                            Hello I will teach you how to play this game. First you must   <a class="" href="https://discord.com/api/oauth2/authorize?client_id=893072412558655558&permissions=2048&scope=bot%20applications.commands" target="_blank">Invite the bot</a>.<br />
+                            Then type !join in the chat.
                             Then navigate here and click on the lobby.
                             <br />
                         </div>
-                        <div class="carousel-item">
-                           You will be given a action point randomly throughout the day.<br />
-                           You can use it to move around and increase the accuracy for your tank.
-                           <br />
+                        <div class="carousel-item ">
+                            You will be given a action point randomly throughout the day.<br />
+                            You can use it to move around and increase the accuracy for your tank.
+                            <br />
                             If you are horizontaly or verticaly in the same line as another tank u can attack it or give it your action points.
                             <br /> The goal of the Game is to be the last man alive.
                             <br />
                             Dont worry if you die then you can give the alive people your action points when you get them. This makes the dead players the strongest players.<br />
-                            So in order to win you must talk to other plkayer form alliances and in the end you may have to betray them.
+                            So in order to win you must talk to other plkayer form alliances and in the end you may have to betray them.  <br />
+                            <br />
+                            <br />
                         </div>
-                        <div class="carousel-item">
+                        <div class="carousel-item  ">
                             In order to win this game you must team up talk to as many people as possible make alliances as you will not be able to win alone.
+                            <br />
+                            Report bugs and give us your Suggestion here:-https://forms.gle/FenEgrA2m5mbEtx96.
                             <br />
                             If you face any issues, contact one of the following staff at discord:
                             <ul id="helplist">
@@ -95,25 +99,19 @@
                             </ul>
                             <br />
                             Report bugs and give us your Suggestion here:-https://forms.gle/FenEgrA2m5mbEtx96.
+                            <br />
+                            <br />
                         </div>
                     </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#help" data-bs-slide="prev">
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Previous</span>
                     </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#help" data-bs-slide="next">
+                    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Next</span>
                     </button>
                 </div>
-
-                If you face any issues, contact one of the following staff at discord:
-                <ul id="helplist">
-                    <li>deepparag#6330</li>
-                    <li>ThunderX#6969</li>
-                    <li>DaWise_Weirdo#1120</li>
-                    <li>multiii ;>#7676</li>
-                </ul>
             </div>
             <div id="game" class="row">
                 <!--Menu Showing List Of Active Lobbies-->
@@ -252,6 +250,7 @@
 
             let lobbylist = "";
             let lobby_set = new Set();
+
             let hashtable = {
                 'Lobby 1': 'https://tanktactics.uc.r.appspot.com/',
                 'Lobby 2': 'https://tanktactics.uc.r.appspot.com/',
@@ -301,127 +300,6 @@
                 lobbies.innerHTML = lobbylist;
 
 
-                var testGameData = {
-                    "users": [
-                        {
-                            "id": "794921502230577182",
-                            "color": {
-                                "color": "#ffffff",
-                                "emote": ":white_circle:"
-                            },
-                            "name": "deepparag",
-                            "x": 21,
-                            "y": 18,
-                            "actionPoints": 3,
-                            "hour": 3,
-                            "health": 3,
-                            "lastAttack": 0,
-                            "accuracy": 80,
-                            "playerId": 0
-                        },
-                        {
-                            "id": "875042500056862721",
-                            "color": {
-                                "color": "#0015ff",
-                                "emote": ":blue_circle:"
-                            },
-                            "name": "Definitely not a Muse",
-                            "x": 7,
-                            "y": 30,
-                            "actionPoints": 6,
-                            "hour": 3,
-                            "health": 3,
-                            "lastAttack": 0,
-                            "accuracy": 80,
-                            "playerId": 1
-                        },
-                        {
-                            "id": "792002811583266856",
-                            "color": {
-                                "color": "#701420",
-                                "emote": ":brown_circle:"
-                            },
-                            "name": "DaWise_Weirdo",
-                            "x": 17,
-                            "y": 22,
-                            "actionPoints": 3,
-                            "hour": 2,
-                            "health": 3,
-                            "lastAttack": 0,
-                            "accuracy": 80,
-                            "playerId": 2
-                        },
-                        {
-                            "id": "819805772522324008",
-                            "color": {
-                                "color": "#00a80e",
-                                "emote": ":green_circle:"
-                            },
-                            "name": "Yelena",
-                            "x": 21,
-                            "y": 23,
-                            "actionPoints": 5,
-                            "hour": 6,
-                            "health": 3,
-                            "lastAttack": 0,
-                            "accuracy": 80,
-                            "playerId": 3
-                        },
-                        {
-                            "id": "762366471371751455",
-                            "color": {
-                                "color": "#ff6f00",
-                                "emote": ":orange_circle:"
-                            },
-                            "name": "notalivehuman",
-                            "x": 28,
-                            "y": 23,
-                            "actionPoints": 4,
-                            "hour": 0,
-                            "health": 3,
-                            "lastAttack": 0,
-                            "accuracy": 80,
-                            "playerId": 4
-                        },
-                        {
-                            "id": "840322628807163984",
-                            "color": {
-                                "color": "#3f00a3",
-                                "emote": ":purple_circle:"
-                            },
-                            "name": "????",
-                            "x": 10,
-                            "y": 23,
-                            "actionPoints": 5,
-                            "hour": 1,
-                            "health": 3,
-                            "lastAttack": 0,
-                            "accuracy": 80,
-                            "playerId": 5
-                        },
-                        {
-                            "id": "766162972014805023",
-                            "color": {
-                                "color": "#ff2f00",
-                                "emote": ":red_circle:"
-                            },
-                            "name": "natasha",
-                            "x": 7,
-                            "y": 14,
-                            "actionPoints": 7,
-                            "hour": 2,
-                            "health": 3,
-                            "lastAttack": 0,
-                            "accuracy": 80,
-                            "playerId": 6
-                        }
-
-                    ],
-                    "channelId": "892972590447087618",
-                    "id": 7,
-                    "gameRunning": true,
-                    "boardSize": 32
-                };
 
                 RenderMap(testGameData);
 
@@ -432,42 +310,49 @@
             helplink.addEventListener('click', showHelp);
             gamelink.addEventListener('click', showGame);
 
-
-
+            let channelId = 892225153054933032;
+          
             //Draw RenderMap
-            function RenderMap(game) {
+            function RenderMap() {
 
+                if (channelId != 0) {
+                    $.get('https://tanktactics.uc.r.appspot.com/data', { "channelId": channelId }, resp => {
+                        let game = resp;
+                        const width = game.boardSize * 2 * 10 + 10;
+                        const height = game.boardSize * 2 * 10 + 10;
 
-                const width = game.boardSize * 2 * 10 + 10;
-                const height = game.boardSize * 2 * 10 + 10;
+                        const canvas = document.createElement('canvas');
+                        canvas.setAttribute("width", width);
+                        canvas.setAttribute("height", height);
+                        const context = canvas.getContext('2d');
+                        context.fillStyle = '#343a40';
+                        context.fillRect(0, 0, width, height)
 
-                const canvas = document.createElement('canvas');
-                canvas.setAttribute("width", width);
-                canvas.setAttribute("height", height);
-                const context = canvas.getContext('2d');
-                context.fillStyle = '#343a40';
-                context.fillRect(0, 0, width, height)
+                        context.fillStyle = '#a39c93';
+                        for (var x = 0; x < game.boardSize; x++) {
 
-                context.fillStyle = '#a39c93';
-                for (var x = 0; x < game.boardSize; x++) {
+                            for (var y = 0; y < game.boardSize; y++) {
+                                context.fillRect(x * 20 + 10, y * 20 + 10, 10, 10);
+                            }
 
-                    for (var y = 0; y < game.boardSize; y++) {
-                        context.fillRect(x * 20 + 10, y * 20 + 10, 10, 10);
-                    }
+                        }
+                        var rendered = "";
 
+                        game.users.forEach((user) => {
+                            rendered += Mustache.render(document.getElementById('template').innerHTML, user)
+                            context.fillStyle = user.color.color;
+                            context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
+                        });
+
+                        document.getElementById('playerData').innerHTML = rendered;
+                        document.getElementById('PlayerData').classList.add('active');
+                        document.getElementById('game-image').src = canvas.toDataURL();
+
+                    });
+                  
                 }
-                var rendered = "";
-
-                game.users.forEach((user) => {
-                    rendered += Mustache.render(document.getElementById('template').innerHTML, user)
-                    context.fillStyle = user.color.color;
-                    context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
-                });
-
-                document.getElementById('playerData').innerHTML = rendered;
-                document.getElementById('PlayerData').classList.add('active');
-                document.getElementById('game-image').src = canvas.toDataURL();
             }
+            setInterval(RenderMap, 1000 * 60);
         });
     </script>
 
