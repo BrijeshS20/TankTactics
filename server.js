@@ -147,6 +147,7 @@ datastore.get(datastore.key(["Game", "save"]), function (err, entity) {
                 }
             });
         });
+        callEveryHour();
     }
 });
 
@@ -174,25 +175,20 @@ app.get('/authorize', (req, res) => {
     }).then(code => {
         res.redirect('/user?code='+code.access_token);
     }).catch((e) => {
-        console.log(e.message)
-        console.log(e.response)
     });
 
 });
 app.get('/user', (req, res) => {
     oauth.getUser(req.query.code).then((resp) => { res.redirect('/game.html?userId='+resp.id); });
-
 });
 
 
 
 app.get('/data', (req, res) => {
-    res.send(getGameById(req.query.channelId));
-
+    res.setHeader("Access-Control-Allow-Origin","*").send(getGameById(req.query.channelId));
 });
 
 app.get('/join', (req, res) => {
-    console.log(req.query);
     var action = join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName);
     var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
     previousAction.push(actionSave);
@@ -201,7 +197,7 @@ app.get('/join', (req, res) => {
 });
 
 app.get('/bot', (req, res) => {
-    if (req.query.key == bot) {
+    if (req.query.key == cfg.bot) {
         var actions = previousAction;
         previousAction = [];
         res.send(actions);
@@ -213,7 +209,7 @@ app.get('/move', (req, res) => {
     var action = UpdateGameMovement(getGameById(req.query.channelId), req.query.userId, req.query.move, req.query.id);
     var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
     previousAction.push(actionSave);
-    res.send(action);
+    res.setHeader("Access-Control-Allow-Origin", "*").send(action);
 });
 
 app.get('/image', (req, res) => {
@@ -222,26 +218,43 @@ app.get('/image', (req, res) => {
 });
 
 app.get('/games', (req, res) => {
-    res.send(getGames(res.query.userId));
+    res.setHeader("Access-Control-Allow-Origin", "*").send(getGames(res.query.userId));
 });
 
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-    console.log(`App listening on port ${PORT}`);
-    console.log('Press Ctrl+C to quit.');
 });
 
+function callEveryHour() {
+
+    setInterval(calculateActionPoints(), 1000 * 60 * 60);
+}
+
+function calculateActionPoints() {
+    games.forEach(game => {
+        game.users.forEach(user => {
+            if (game.gameRunning) {
+                user.hour++;
+                if ((Math.random() * 24) < user.hour) {
+                    user.hour = 0;
+                    user.actionPoints++;
+                    previousAction.push({ "code": 200, "message": user.name + " has gotten an action point.", "channelId": game.channelId })
+                };
+            }
+        });
+        saveGame(game);
+    });
+}
 function getGames(userId) {
     var lobbies = [];
-    games.forEach(function (game) { if (containsUser(game, userId)) { lobbies.push(game.channelId); } });
+    games.forEach(function (game) { if (containsUser(game, userId)) { lobbies.push({ "channelId": game.channelId, "channelnName": game.channelName, "serverName": game.serverName }); } });
     return lobbies;
 
 }
 function getGameById(channelId) {
     var gameToReturn;
     games.forEach(function (game) {
-        console.log(game.channelId + " " + channelId + " " + (game.channelId == channelId));
         if (game.channelId == channelId) {
             gameToReturn = game;
         }
@@ -416,7 +429,7 @@ function UpdateGameMovement(game, userId, move, id) {
         saveGame(game);
     }
     if (responce.code == 100) {
-        datastore.delete(datastore.key(["Game", game.channelId])).then((responce) => { console.log(responce); });
+        datastore.delete(datastore.key(["Game", game.channelId])).then((responce) => {  });
     }
     return responce;
 }
@@ -424,7 +437,6 @@ function UpdateGameMovement(game, userId, move, id) {
 function join(channelId, userId, name, channelName, serverName) {
     var responce = { code: 200, message: name + " has joined.", game: null };
     var channelIds = getAllChannels();
-    console.log(channelIds);
     if (channelIds.includes(channelId)) {
         var game = getGameById(channelId);
         if (containsUser(game, userId)) {
@@ -491,7 +503,6 @@ function createUser(id, name, playerId, x, y) {
         "accuracy": 80,
         "playerId": playerId,
     }
-    console.log(playerId);
     if (playerId == 0) {
         user.color.emote = ":blue_circle:";
         user.color.color = "#00eeff";
@@ -524,7 +535,6 @@ function createUser(id, name, playerId, x, y) {
 
 
 function saveGame(game) {
-    console.log(game);
     var channelIds = getAllChannels();
     datastore.save({ key: datastore.key(["Game", "save"]), data: { "channelId": channelIds } });
     datastore.save({ key: datastore.key(["Game", game.channelId]), data: game });
