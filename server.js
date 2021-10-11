@@ -17,7 +17,7 @@ const oauth = new DiscordOauth2({
 });
 // Instantiate a datastore client
 const datastore = new Datastore();
-
+        
 const app = express();
 
 var previousAction = [];
@@ -97,7 +97,8 @@ app.get('/image', (req, res) => {
 });
 
 app.get('/games', (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*").send(getGames(res.query.userId));
+    console.log(req.query);
+    res.setHeader("Access-Control-Allow-Origin", "*").send(getGames(req.query.userId));
 });
 
 const PORT = process.env.PORT || 8080;
@@ -205,7 +206,7 @@ function saveGame(game) {
 
 
 function getGameById(channelId) {
-    var gameToReturn;
+    var gameToReturn="";
     games.forEach(function (game) {
         if (game.channelId == channelId) {
             gameToReturn = game;
@@ -227,7 +228,7 @@ function getAllChannels() {
 //API main function
 function getGames(userId) {
     var lobbies = [];
-    games.forEach(function (game) { if (containsUser(game, userId)) { lobbies.push({ "channelId": game.channelId, "channelnName": game.channelName, "serverName": game.serverName }); } });
+    games.forEach(function (game) { if (containsUser(game, userId)) { lobbies.push({ "channelId": game.channelId, "channelName": game.channelName, "serverName": game.serverName }); } });
     return lobbies;
 
 }
