@@ -157,13 +157,13 @@ function createUser(id, name, playerId, x, y) {
         user.color.color = "#22ff00";
     } else if (playerId == 3) {
         user.color.emote = ":orange_circle:";
-        user.color.color = "#b300ff";
+        user.color.color = "#fa6c00";
     } else if (playerId == 4) {
         user.color.emote = ":purple_circle:";
         user.color.color = "#b300ff";
     } else if (playerId == 5) {
         user.color.emote = ":red_circle:";
-        user.color.color = "#ff0000";
+        user.color.color = "#ff1100";
     } else if (playerId == 6) {
         user.color.emote = ":yellow_circle:";
         user.color.color = "#ffea00";

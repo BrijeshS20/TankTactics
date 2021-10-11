@@ -321,15 +321,18 @@
                     let lobbylist = "";
                     var lobbyTemplate = document.getElementById('lobby');
                     console.log(resp);
-                    resp.forEach(lobby => {
-                        lobbylist += Mustache.render(lobbyTemplate.innerHTML, lobby);
-                    });
-                    lobbies.innerHTML = lobbylist;
-                    // Make the Game Page visible
-                    home.style.display = "none";
-                    help.style.display = "none";
-                    game.style.display = "flex";
-
+                    if (resp.lenght > 0) {
+                        resp.forEach(lobby => {
+                            lobbylist += Mustache.render(lobbyTemplate.innerHTML, lobby);
+                        });
+                        lobbies.innerHTML = lobbylist;
+                        // Make the Game Page visible
+                        home.style.display = "none";
+                        help.style.display = "none";
+                        game.style.display = "flex";
+                    } else {
+                        alert('Please join a lobby. If you dont know how to see help!!');
+                    }
                 });
 
 
