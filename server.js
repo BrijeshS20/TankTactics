@@ -22,19 +22,12 @@ const app = express();
 
 var previousAction = [];
 
-var games = [];
+var channelIds = [];
 
 //datastore
 datastore.get(datastore.key(["Game", "save"]), function (err, entity) {
     if (typeof entity !== 'undefined') {
-        var channelIds = entity.channelId;
-        channelIds.forEach((channelId) => {
-            datastore.get(datastore.key(["Game", channelId]), function (err, entity) {
-                if (typeof entity !== 'undefined') {
-                    games.push(entity);
-                }
-            });
-        });
+         channelIds = entity.channelId;
         callEveryHour();
     }
 });
@@ -93,7 +86,7 @@ app.get('/move', (req, res) => {
 
 app.get('/image', (req, res) => {
     res.setHeader('Content-Type', 'image/png');
-    DrawNodeJS(getGameById(req.query.channelId)).pngStream().pipe(res);
+    DrawNodeJS(getGameById(req.query.channelId.trim())).pngStream().pipe(res);
 });
 
 app.get('/games', (req, res) => {
@@ -106,7 +99,8 @@ app.listen(PORT, () => {
 });
 
 function calculateActionPoints() {
-    games.forEach(game => {
+    channelIds.forEach(channelId => {
+        var game = getGameById(channelId);
         if (game.gameRunning) {
             game.users.forEach(user => {
 
@@ -207,9 +201,9 @@ function saveGame(game) {
 
 function getGameById(channelId) {
     var gameToReturn="";
-    games.forEach(function (game) {
-        if (game.channelId == channelId) {
-            gameToReturn = game;
+    datastore.get(datastore.key(["Game", channelId]), function (err, entity) {
+        if (typeof entity !== 'undefined') {
+            gameToReturn = entity;
         }
     });
     return gameToReturn;
@@ -218,9 +212,7 @@ function getGameById(channelId) {
 
 //channels
 function getAllChannels() {
-    var channelids = [];
-    games.forEach((game) => { channelids.push(game.channelId) });
-    return channelids;
+    return channelIds;
 }
 
 
@@ -228,13 +220,23 @@ function getAllChannels() {
 //API main function
 function getGames(userId) {
     var lobbies = [];
-    games.forEach(function (game) { if (containsUser(game, userId)) { lobbies.push({ "channelId": game.channelId, "channelName": game.channelName, "serverName": game.serverName }); } });
+    channelIds.forEach(channelId => {
+        var game = getGameById(channelId);
+        if (containsUser(game, userId)) {
+            lobbies.push({
+                "channelId": channelId,
+                "channelName": game.channelName,
+                "serverName": game.serverName
+            });
+        }
+    });
     return lobbies;
 
 }
 
 
 function DrawNodeJS(game) {
+    console.log(game);
     const width = game.boardSize * 2 * 10 + 10;
     const height = game.boardSize * 2 * 10 + 10;
 
@@ -252,6 +254,7 @@ function DrawNodeJS(game) {
         }
 
     }
+
     game.users.forEach((user) => {
         context.fillStyle = user.color.color;
         context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
@@ -320,13 +323,13 @@ function UpdateGameMovement(game, userId, move, id) {
                                     enemy.health--;
                                     if (enemy.health == 0) {
                                         response.message = user.name + " has killed" + enemy.name;
-                                        var lastPersonAlive = true;
+                                        var peopleAlive = 0;
                                         game.users.forEach(function (user) {
                                             if (user.health > 0) {
-                                                lastPersonAlive = false;
+                                                peopleAlive ++;
                                             }
                                         });
-                                        if (!lastPersonAlive) {
+                                        if (peopleAlive>1) {
                                             response.code = 100;
                                             response.message = user.name + " has Won the game by killing " + enemy.name;
                                         }
@@ -406,19 +409,25 @@ function join(channelId, userId, name, channelName, serverName) {
     var channelIds = getAllChannels();
     if (channelIds.includes(channelId)) {
         var game = getGameById(channelId);
-        if (containsUser(game, userId)) {
-            response.code = 405;
-            response.message = "U can join only once.";
-        } else {
-            var x = Math.round(Math.random() * game.boardSize);
-            var y = Math.round(Math.random() * game.boardSize);
-            game.users.push(createUser(userId, name, game.id, x, y));
-            game.id++;
-            if (game.id > 7) {
-                game.gameRunning = true;
+        if (game.id < 8) {
+           
+            if (containsUser(game, userId)) {
+                response.code = 405;
+                response.message = "U can join only once.";
+            } else {
+                var x = Math.round(Math.random() * game.boardSize);
+                var y = Math.round(Math.random() * game.boardSize);
+                game.users.push(createUser(userId, name, game.id, x, y));
+                game.id++;
+                if (game.id > 7) {
+                    game.gameRunning = true;
+                }
+                saveGame(game);
+                response.game = game;
             }
-            saveGame(game);
-            response.game = game;
+        } else {
+            response.code = 405;
+            response.message = "The lobby is full.";
         }
 
     } else {
@@ -426,7 +435,7 @@ function join(channelId, userId, name, channelName, serverName) {
         var x = Math.round(Math.random() * game.boardSize);
         var y = Math.round(Math.random() * game.boardSize);
         game.users.push(createUser(userId, name, game.id, x, y));
-        games.push(game);
+        channelIds.push(channelId);
         game.id++;
         saveGame(game);
         if (game.id > 7) {
