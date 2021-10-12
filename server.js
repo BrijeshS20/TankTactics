@@ -52,11 +52,13 @@ client.connect(err => {
         getGameById(req.query.channelId).then(game => { res.setHeader("Access-Control-Allow-Origin", "*").send(game); });
     });
 
-       app.get('/join', (req, res) => {
-        join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName).then(   action => {
-            var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
-            previousAction.push(actionSave);
-            res.send(action);
+    app.get('/join', (req, res) => {
+        getGameById(req.query.channelId).then(game => {
+            join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName,game).then(action => {
+                var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
+                previousAction.push(actionSave);
+                res.send(action);
+            });
         });
 });
 
@@ -410,11 +412,11 @@ function UpdateGameMovement(game, userId, move, id) {
     return response;
 }
 
-async function join(channelId, userId, name, channelName, serverName) {
+async function join(channelId, userId, name, channelName, serverName,game) {
     var response = { code: 200, message: name + " has joined.", game: null };
     return getAllChannels().then(channelIds => {
         if (channelIds.includes(channelId)) {
-            var game = await getGameById(channelId);
+          
             if (game.id < 8) {
                 if (containsUser(game, userId)) {
                     response.code = 405;
