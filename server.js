@@ -94,9 +94,8 @@ client.connect(err => {
 
     function calculateActionPoints() {
         console.log("Calculating action points");
-        var cursor = collection.find();
-        cursor.each(function (err, game) {
-            if (game != null) {
+        collection.find({}).toArray(function (err, games) {
+            games.forEach((game) => {
                 if (game.gameRunning) {
                     game.users.forEach(user => {
 
@@ -110,9 +109,7 @@ client.connect(err => {
                     });
                     saveGame(game);
                 }
-            } else {
-                return;
-            }
+            });
         });
     }
 
@@ -124,12 +121,10 @@ client.connect(err => {
     //channels
     function getAllChannels() {
         var channelids = [];
-        var cursor = collection.find();
-        cursor.each(function (err, game) {
-            if (game == null) {
-                return;
-            }
-            channelids.push(game.channelId)
+        collection.find({}).toArray(function (err, games) {
+            games.forEach((game) => {
+                channelids.push(game.channelId);
+            });
         });
         return channelids;
     }
@@ -190,11 +185,13 @@ client.connect(err => {
 
     function containsUser(game, userId) {
         var userThere = false;
-        game.users.forEach((user) => {
-            if (user.id == userId) {
-                userThere = true;
-            }
-        });
+        if (typeof game.users != 'undefined') {
+            game.users.forEach((user) => {
+                if (user.id == userId) {
+                    userThere = true;
+                }
+            });
+        }
         return userThere;
     }
     //Game Function
@@ -208,7 +205,7 @@ client.connect(err => {
         collection.updateOne({
             "channelId": game.channelId
         }, game, function (err, res) {
-            if (err) console.log( err);
+            if (err) console.log(err);
             console.log("game updated: " + game.channelId);
         }
         );
@@ -217,14 +214,12 @@ client.connect(err => {
 
     function getGameById(channelId) {
         var gameToReturn = "";
-        var cursor = collection.find();
-        cursor.each(function (err, game) {
-            if (game == null) {
-                return;
-            }
-            if (game.channelId == channelId) {
-                gameToReturn = game;
-            }
+        collection.find({}).toArray(function (err, games) {
+            games.forEach((game) => {
+                if (game.channelId == channelId) {
+                    gameToReturn = game;
+                }
+            });
         });
         return gameToReturn;
     }
@@ -234,22 +229,15 @@ client.connect(err => {
     //API main function
     function getGames(userId) {
         var lobbies = [];
-        var cursor = collection.find();
-        cursor.each(function (err, game) {
 
-            if (game == null) {
-                return;
-            }
-
-            if (containsUser(game, userId)) {
-                lobbies.push({ "channelId": game.channelId, "channelName": game.channelName, "serverName": game.serverName });
-            }
-
+        collection.find({}).toArray(function (err, games) {
+            games.forEach((game) => {
+                if (containsUser(game, userId)) {
+                    lobbies.push({ "channelId": game.channelId, "channelName": game.channelName, "serverName": game.serverName });
+                }
+            });
         });
-
-
         return lobbies;
-
     }
 
 
@@ -415,7 +403,7 @@ client.connect(err => {
             saveGame(game);
         }
         if (response.code == 100) {
-            datastore.delete(datastore.key(["Game", game.channelId])).then((responce) => { });
+            collection.deleteOne({ "channelId": channelId });
         }
         return response;
     }
@@ -454,7 +442,7 @@ client.connect(err => {
             collection.insertOne({
                 "channelId": game.channelId
             }, game, function (err, res) {
-                if (err) console.log( err);
+                if (err) console.log(err);
                 console.log("game updated: " + game.channelId);
             }
             )
