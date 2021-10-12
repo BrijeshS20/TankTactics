@@ -1,4 +1,3 @@
-
 const { createCanvas } = require('canvas');
 
 const { Datastore } = require('@google-cloud/datastore');
@@ -17,17 +16,24 @@ const oauth = new DiscordOauth2({
 });
 // Instantiate a datastore client
 const datastore = new Datastore();
-        
+
 const app = express();
 
 var previousAction = [];
 
-var channelIds = [];
+var games = [];
 
 //datastore
 datastore.get(datastore.key(["Game", "save"]), function (err, entity) {
     if (typeof entity !== 'undefined') {
-         channelIds = entity.channelId;
+        var channelIds = entity.channelId;
+        channelIds.forEach((channelId) => {
+            datastore.get(datastore.key(["Game", channelId]), function (err, entity) {
+                if (typeof entity !== 'undefined') {
+                    games.push(entity);
+                }
+            });
+        });
         callEveryHour();
     }
 });
@@ -86,7 +92,7 @@ app.get('/move', (req, res) => {
 
 app.get('/image', (req, res) => {
     res.setHeader('Content-Type', 'image/png');
-    DrawNodeJS(getGameById(req.query.channelId.trim())).pngStream().pipe(res);
+    DrawNodeJS(getGameById(req.query.channelId)).pngStream().pipe(res);
 });
 
 app.get('/games', (req, res) => {
@@ -99,8 +105,7 @@ app.listen(PORT, () => {
 });
 
 function calculateActionPoints() {
-    channelIds.forEach(channelId => {
-        var game = getGameById(channelId);
+    games.forEach(game => {
         if (game.gameRunning) {
             game.users.forEach(user => {
 
@@ -200,10 +205,10 @@ function saveGame(game) {
 
 
 function getGameById(channelId) {
-    var gameToReturn="";
-    datastore.get(datastore.key(["Game", channelId]), function (err, entity) {
-        if (typeof entity !== 'undefined') {
-            gameToReturn = entity;
+    var gameToReturn = "";
+    games.forEach(function (game) {
+        if (game.channelId == channelId) {
+            gameToReturn = game;
         }
     });
     return gameToReturn;
@@ -212,7 +217,9 @@ function getGameById(channelId) {
 
 //channels
 function getAllChannels() {
-    return channelIds;
+    var channelids = [];
+    games.forEach((game) => { channelids.push(game.channelId) });
+    return channelids;
 }
 
 
@@ -220,23 +227,13 @@ function getAllChannels() {
 //API main function
 function getGames(userId) {
     var lobbies = [];
-    channelIds.forEach(channelId => {
-        var game = getGameById(channelId);
-        if (containsUser(game, userId)) {
-            lobbies.push({
-                "channelId": channelId,
-                "channelName": game.channelName,
-                "serverName": game.serverName
-            });
-        }
-    });
+    games.forEach(function (game) { if (containsUser(game, userId)) { lobbies.push({ "channelId": game.channelId, "channelName": game.channelName, "serverName": game.serverName }); } });
     return lobbies;
 
 }
 
 
 function DrawNodeJS(game) {
-    console.log(game);
     const width = game.boardSize * 2 * 10 + 10;
     const height = game.boardSize * 2 * 10 + 10;
 
@@ -254,7 +251,6 @@ function DrawNodeJS(game) {
         }
 
     }
-
     game.users.forEach((user) => {
         context.fillStyle = user.color.color;
         context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
@@ -323,13 +319,13 @@ function UpdateGameMovement(game, userId, move, id) {
                                     enemy.health--;
                                     if (enemy.health == 0) {
                                         response.message = user.name + " has killed" + enemy.name;
-                                        var peopleAlive = 0;
+                                        var lastPersonAlive = true;
                                         game.users.forEach(function (user) {
                                             if (user.health > 0) {
-                                                peopleAlive ++;
+                                                lastPersonAlive = false;
                                             }
                                         });
-                                        if (peopleAlive>1) {
+                                        if (!lastPersonAlive) {
                                             response.code = 100;
                                             response.message = user.name + " has Won the game by killing " + enemy.name;
                                         }
@@ -410,7 +406,6 @@ function join(channelId, userId, name, channelName, serverName) {
     if (channelIds.includes(channelId)) {
         var game = getGameById(channelId);
         if (game.id < 8) {
-           
             if (containsUser(game, userId)) {
                 response.code = 405;
                 response.message = "U can join only once.";
@@ -427,7 +422,7 @@ function join(channelId, userId, name, channelName, serverName) {
             }
         } else {
             response.code = 405;
-            response.message = "The lobby is full.";
+            response.message = "The lobby is full";
         }
 
     } else {
@@ -435,7 +430,7 @@ function join(channelId, userId, name, channelName, serverName) {
         var x = Math.round(Math.random() * game.boardSize);
         var y = Math.round(Math.random() * game.boardSize);
         game.users.push(createUser(userId, name, game.id, x, y));
-        channelIds.push(channelId);
+        games.push(game);
         game.id++;
         saveGame(game);
         if (game.id > 7) {
