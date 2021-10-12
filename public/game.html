@@ -309,7 +309,7 @@
                     let lobbylist = "";
                     var lobbyTemplate = document.getElementById('lobby');
                     console.log(resp);
-                    if (resp.lenght > 0) {
+                    if (resp.length > 0) {
                         resp.forEach(lobby => {
                             lobbylist += Mustache.render(lobbyTemplate.innerHTML, lobby);
                         });
