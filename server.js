@@ -52,8 +52,8 @@ client.connect(err => {
         getGameById(req.query.channelId).then(game => { res.setHeader("Access-Control-Allow-Origin", "*").send(game); });
     });
 
-    app.get('/join', (req, res) => {
-        join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName).then(  var action => {
+       app.get('/join', (req, res) => {
+        join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName).then(   action => {
             var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
             previousAction.push(actionSave);
             res.send(action);
