@@ -55,7 +55,7 @@ client.connect(err => {
     app.get('/join', (req, res) => {
         getGameById(req.query.channelId).then(game => {
             console.log("joining user");
-            
+
             join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName, game).then(action => {
                 var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
                 previousAction.push(actionSave);
@@ -214,7 +214,9 @@ client.connect(err => {
     function saveGame(game) {
         collection.updateOne({
             "channelId": game.channelId
-        }, game, function (err, res) {
+        }, {
+            $set: game
+        }, function (err, res) {
             if (err) console.log(err);
             console.log("game updated: " + game.channelId);
         }
@@ -319,7 +321,7 @@ client.connect(err => {
                 }
                 if (move.toLowerCase() == "attack") {
                     var user = getUserById(game, userId);
-                    if (Date.now > user.lastAttack + 1000 * 60 * 15) {
+                    if (Date.now() > user.lastAttack + 1000 * 60 * 15) {
                         var enemy = getUserById(game, id);
                         if (typeof enemy != "undefined") {
 
@@ -411,7 +413,7 @@ client.connect(err => {
     }
 
     async function join(channelId, userId, name, channelName, serverName, gameData) {
-      
+
         var response = { code: 200, message: name + " has joined.", game: null };
         return getAllChannels().then(channelIds => {
             if (channelIds.includes(channelId)) {
@@ -420,8 +422,8 @@ client.connect(err => {
                         response.code = 405;
                         response.message = "U can join only once.";
                     } else {
-                        var x = Math.round(Math.random() * game.boardSize);
-                        var y = Math.round(Math.random() * game.boardSize);
+                        var x = Math.round(Math.random() * gameData.boardSize);
+                        var y = Math.round(Math.random() * gameData.boardSize);
                         gameData.users.push(createUser(userId, name, gameData.id, x, y));
                         gameData.id++;
                         if (gameData.id > 7) {
