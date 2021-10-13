@@ -206,8 +206,10 @@
                     var give = "";
                     game.users.forEach((user) => {
                         rendered += Mustache.render(document.getElementById('template').innerHTML, user);
-                        context.fillStyle = user.color.color;
-                        context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
+                        if (user.health > 0) {
+                            context.fillStyle = user.color.color;
+                            context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
+                        }
                         attack += Mustache.render(document.getElementById('attackTemplate').innerHTML, user);
                         give += Mustache.render(document.getElementById('giveTemplate').innerHTML, user);
                     });

@@ -8,7 +8,7 @@ const path = require('path');
 const app = express();
 var previousAction = [];
 app.use(express.static(path.resolve(path.join(__dirname, '/public'))));
-
+var hourCounter = 0;
 const oauth = new DiscordOauth2({
     clientId: cfg.id,
     clientSecret: cfg.secert,
@@ -57,14 +57,18 @@ client.connect(err => {
             console.log("joining user");
 
             join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName, game).then(action => {
-                var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
-                previousAction.push(actionSave);
+                if (typeof req.query.bot == 'undefined') {
+                    var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
+                    previousAction.push(actionSave);
+                  
+                }
                 res.send(action);
             });
         });
     });
 
     app.get('/bot', (req, res) => {
+
         if (req.query.key == cfg.bot) {
             var actions = previousAction;
             previousAction = [];
@@ -76,8 +80,14 @@ client.connect(err => {
     app.get('/move', (req, res) => {
         getGameById(req.query.channelId).then(game => {
             var action = UpdateGameMovement(game, req.query.userId, req.query.move, req.query.id);
-            var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
-            previousAction.push(actionSave);
+            if (typeof req.query.bot == 'undefined') {
+                var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
+                if (actionSave.message.includes('move') || actionSave.message.includes('increased') || actionSave.message.includes('wait')) {
+
+                } else {
+                    previousAction.push(actionSave);
+                }
+            }
             res.setHeader("Access-Control-Allow-Origin", "*").send(action);
         });
     });
@@ -98,7 +108,7 @@ client.connect(err => {
     const PORT = process.env.PORT || 8080;
     app.listen(PORT, () => {
         console.log("Starting server!!!");
-        callEveryHour();
+        calculateActionPoints();
     });
 
 
@@ -121,12 +131,9 @@ client.connect(err => {
                 }
             });
         });
+        setTimeout(calculateActionPoints, 1000 * 60 * 60);
     }
 
-    function callEveryHour() {
-
-        setInterval(calculateActionPoints, 1000 * 60 * 60);
-    }
 
     //channels
     async function getAllChannels() {
@@ -189,7 +196,7 @@ client.connect(err => {
 
     function getUserById(game, userId) {
         var userToReturn;
-        game.users.forEach(function (user) { if (userId == user.id) { userToReturn = user; } });
+        game.users.forEach(function (user) { if (userId == user.id || Number(userId) == user.playerId) { userToReturn = user; } });
         return userToReturn;
     }
 
@@ -223,6 +230,17 @@ client.connect(err => {
         );
     }
 
+    function saveGame(game, channelId) {
+        collection.updateOne({
+            "channelId": game.channelId
+        }, {
+            $set: game
+        }, function (err, res) {
+            if (err) console.log(err);
+            console.log("game updated: " + game.channelId);
+        }
+        );
+    }
 
     async function getGameById(channelId) {
         var game = await collection.findOne({ "channelId": channelId });
@@ -264,8 +282,10 @@ client.connect(err => {
 
         }
         game.users.forEach((user) => {
-            context.fillStyle = user.color.color;
-            context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
+            if (user.health > 0) {
+                context.fillStyle = user.color.color;
+                context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
+            }
         });
         return canvas;
 
@@ -280,84 +300,100 @@ client.connect(err => {
         if (game.gameRunning) {
             if (user.actionPoints > 0) {
                 if (move.toLowerCase() == "up") {
-
-                    if (user.y > 0) {
-                        user.y--;
-                        response.message = user.name + " has moved";
+                    if (user.health > 0) {
+                        if (user.y > 0) {
+                            user.y--;
+                            response.message = user.name + " has moved.";
+                        } else {
+                            response.code = 405;
+                            response.message = "Reached edge of Map.";
+                        }
                     } else {
                         response.code = 405;
-                        response.message = "Reached edge of Map";
+                        response.message = "Dead people can not move.";
                     }
-
                 }
                 if (move.toLowerCase() == "down") {
-                    if (user.y < game.boardSize - 1) {
-                        user.y++;
-                        response.message = user.name + " has moved";
+                    if (user.health > 0) {
+                        if (user.y < game.boardSize - 1) {
+                            user.y++;
+                            response.message = user.name + " has moved.";
+                        } else {
+                            response.code = 405;
+                            response.message = "Reached edge of Map.";
+                        }
                     } else {
                         response.code = 405;
-                        response.message = "Reached edge of Map";
+                        response.message = "Dead people can not move.";
                     }
                 }
+
                 if (move.toLowerCase() == "right") {
                     var user = getUserById(game, userId);
-                    if (user.x < game.boardSize - 1) {
-                        user.x++;
-                        response.message = user.name + " has moved";
+                    if (user.health > 0) {
+                        if (user.x < game.boardSize - 1) {
+                            user.x++;
+                            response.message = user.name + " has moved.";
+                        } else {
+                            response.code = 405;
+                            response.message = "Reached edge of Map.";
+                        }
                     } else {
                         response.code = 405;
-                        response.message = "Reached edge of Map";
+                        response.message = "Dead people can not move.";
                     }
                 }
                 if (move.toLowerCase() == "left") {
                     var user = getUserById(game, userId);
-                    if (user.x > 0) {
-                        user.x--;
-                        response.message = user.name + " has moved";
+                    if (user.health > 0) {
+                        if (user.x > 0) {
+                            user.x--;
+                            response.message = user.name + " has moved.";
+                        } else {
+                            response.code = 405;
+                            response.message = "Reached edge of Map.";
+                        }
                     } else {
                         response.code = 405;
-                        response.message = "Reached edge of Map";
+                        response.message = "Dead people can not move.";
                     }
                 }
                 if (move.toLowerCase() == "attack") {
                     var user = getUserById(game, userId);
                     if (Date.now() > user.lastAttack + 1000 * 60 * 15) {
                         var enemy = getUserById(game, id);
-                        if (typeof enemy != "undefined") {
+                        if (user.health > 0) {
+                            if (typeof enemy != "undefined") {
 
-                            if (enemy.health > 0) {
-                                if (enemy.x == user.x || enemy.y == user.y) {
-                                    if (Math.random() * 100 < user.accuracy) {
-                                        enemy.health--;
-                                        if (enemy.health == 0) {
-                                            response.message = user.name + " has killed" + enemy.name;
-                                            var lastPersonAlive = true;
-                                            game.users.forEach(function (user) {
-                                                if (user.health > 0) {
-                                                    lastPersonAlive = false;
-                                                }
-                                            });
-                                            if (!lastPersonAlive) {
-                                                response.code = 100;
-                                                response.message = user.name + " has Won the game by killing " + enemy.name;
+                                if (enemy.health > 0) {
+                                    if (enemy.x == user.x || enemy.y == user.y) {
+                                        if (Math.random() * 100 < user.accuracy) {
+                                            enemy.health--;
+                                            user.lastAttack = Date.now();
+                                            if (enemy.health == 0) {
+                                                response.message = user.name + " has killed " + enemy.name;
+                                               
+                                            } else {
+                                                response.message = user.name + " has attacked " + enemy.name;
                                             }
                                         } else {
-                                            response.message = user.name + " has attacked " + enemy.name;
+                                            response.message = user.name + " has tried to attack " + enemy.name;
                                         }
                                     } else {
-                                        response.message = user.name + " has tried to attack " + enemy.name;
+                                        response.code = 405;
+                                        response.message = "The player is neither horitontaly or vertically same to you.";
                                     }
                                 } else {
                                     response.code = 405;
-                                    response.message = "The player is neither horitontaly or vertically same to u.";
+                                    response.message = "You cant kill dead players";
                                 }
                             } else {
                                 response.code = 405;
-                                response.message = "You cant kill dead players";
+                                response.message = "No such user.";
                             }
                         } else {
                             response.code = 405;
-                            response.message = "No such user.";
+                            response.message = "Dead People cannot attack.";
                         }
                     } else {
                         response.code = 405;
@@ -385,7 +421,7 @@ client.connect(err => {
                 if (move.toLowerCase() == "upgrade") {
                     if (user.accuracy < 100) {
                         user.accuracy = user.accuracy + 4;
-                        response.message = user.name = " increased their accuracy from " + (user.accuracy - 4) + " to " + user.accuracy;
+                        response.message = user.name + ' increased their accuracy from ' + (user.accuracy - 4) + " to " + user.accuracy;
                     } else {
                         response.code = 405;
                         response.message = "Your accuracy is max.";
@@ -407,7 +443,7 @@ client.connect(err => {
             saveGame(game);
         }
         if (response.code == 100) {
-            collection.deleteOne({ "channelId": channelId });
+            collection.deleteOne({ "channelId": game.channelId });
         }
         return response;
     }
