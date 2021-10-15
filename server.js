@@ -4,11 +4,12 @@ const { MongoClient } = require('mongodb');
 const DiscordOauth2 = require("discord-oauth2");
 const express = require('express');
 const path = require('path');
+const { NOTINITIALIZED } = require('dns');
 
 const app = express();
 var previousAction = [];
 app.use(express.static(path.resolve(path.join(__dirname, '/public'))));
-var hourCounter = 0;
+
 const oauth = new DiscordOauth2({
     clientId: cfg.id,
     clientSecret: cfg.secert,
@@ -57,11 +58,6 @@ client.connect(err => {
             console.log("joining user");
 
             join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName, game).then(action => {
-                if (typeof req.query.bot == 'undefined') {
-                    var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
-                    previousAction.push(actionSave);
-                  
-                }
                 res.send(action);
             });
         });
@@ -120,7 +116,7 @@ client.connect(err => {
                     game.users.forEach(user => {
 
                         user.hour++;
-                        if ((Math.random() * 24) < user.hour) {
+                        if ((Math.random() * 12) < user.hour) {
                             user.hour = 0;
                             user.actionPoints++;
                             previousAction.push({ "code": 200, "message": user.name + " has gotten an action point.", "channelId": game.channelId })
@@ -371,7 +367,18 @@ client.connect(err => {
                                             enemy.health--;
                                             user.lastAttack = Date.now();
                                             if (enemy.health == 0) {
+                                                alivePeople = 0;
+                                                game.user.forEach(checkUserHealth => {
+                                                    if (checkUserHealth.health > 0) {
+                                                        alivePeople++;
+                                                    }
+                                                    });
+
                                                 response.message = user.name + " has killed " + enemy.name;
+                                                if (alivePeople < 1) {
+                                                    response.code = 100;
+                                                    response.message = user.name + " has killed " + enemy.name + " and has won.";
+                                                } 
                                                
                                             } else {
                                                 response.message = user.name + " has attacked " + enemy.name;
@@ -453,10 +460,11 @@ client.connect(err => {
         var response = { code: 200, message: name + " has joined.", game: null };
         return getAllChannels().then(channelIds => {
             if (channelIds.includes(channelId)) {
+                
                 if (gameData.id < 8) {
                     if (containsUser(gameData, userId)) {
                         response.code = 405;
-                        response.message = "U can join only once.";
+                        response.message = "You can join only once.";
                     } else {
                         var x = Math.round(Math.random() * gameData.boardSize);
                         var y = Math.round(Math.random() * gameData.boardSize);

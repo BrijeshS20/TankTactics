@@ -81,9 +81,12 @@
                             You will be given a action point randomly throughout the day.<br />
                             You can use it to move around and increase the accuracy for your tank.
                             <br />
-                            If you are horizontaly or verticaly in the same line as another tank u can attack it or give it your action points.
+                            If you are horizontaly or verticaly in the same line as another tank u can attack it.
                             <br /> The goal of the Game is to be the last man alive.
                             <br />
+                            You can give anyone your action points.
+                            <br />
+                            
                             Dont worry if you die then you can give the alive people your action points when you get them. This makes the dead players the strongest players.<br />
                             So in order to win you must talk to other plkayer form alliances and in the end you may have to betray them.
                         </div>
@@ -148,7 +151,7 @@
     </script>
 
     <script id="lobby" type="x-tmpl-mustache">
-            <button class="btn btn-outline-light btn-sm " onclick="channelId = '{{channelId}}';RenderMap();">Join {{channelName}} in {{serverName}}</button>
+            <button class="btn btn-outline-light btn-sm " onclick="channelId = '{{channelId}}';RenderMap();">Join lobbby {{channelName}} in {{serverName}}</button>
     </script>
 
 
@@ -165,6 +168,7 @@
     </script>
     <script>
         let channelId = 0;
+       
         // Helper Functions:
         function getUrlVars() {
             let vars = {};
@@ -174,8 +178,8 @@
             return vars;
         }
 
-        function move( id, type) {
-            $.get('https://tanktactics.uc.r.appspot.com/move', { "channelId": channelId, "userId": getUrlVars()['userId'].split('#')[0], "move": type, "id": id }, resp => { alert(resp.message);});
+        function move(id, type) {
+            $.get('https://tanktactics.uc.r.appspot.com/move', { "channelId": channelId, "userId": getUrlVars()['userId'].split('#')[0], "move": type, "id": id }, resp => { RenderMap(); });
         }
         //Draw RenderMap
         function RenderMap() {
