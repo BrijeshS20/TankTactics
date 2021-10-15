@@ -76,9 +76,9 @@ client.connect(err => {
     app.get('/move', (req, res) => {
         getGameById(req.query.channelId).then(game => {
             var action = UpdateGameMovement(game, req.query.userId, req.query.move, req.query.id);
-            if (typeof req.query.bot == 'undefined') {
+            if (typeof req.query.bot == 'undefined' || req.query.move.toLowerCase() == 'attack') {
                 var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
-                if (actionSave.message.includes('move') || actionSave.message.includes('increased') || actionSave.message.includes('wait')) {
+                if (actionSave.message.includes('move') || actionSave.message.includes('increased') ) {
 
                 } else {
                     previousAction.push(actionSave);
@@ -116,7 +116,7 @@ client.connect(err => {
                     game.users.forEach(user => {
 
                         user.hour++;
-                        if ((Math.random() * 12) < user.hour) {
+                        if ((Math.random() * 14) < user.hour) {
                             user.hour = 0;
                             user.actionPoints++;
                             previousAction.push({ "code": 200, "message": user.name + " has gotten an action point.", "channelId": game.channelId })
@@ -368,7 +368,7 @@ client.connect(err => {
                                             user.lastAttack = Date.now();
                                             if (enemy.health == 0) {
                                                 alivePeople = 0;
-                                                game.user.forEach(checkUserHealth => {
+                                                game.users.forEach(checkUserHealth => {
                                                     if (checkUserHealth.health > 0) {
                                                         alivePeople++;
                                                     }
@@ -450,7 +450,9 @@ client.connect(err => {
             saveGame(game);
         }
         if (response.code == 100) {
-            collection.deleteOne({ "channelId": game.channelId });
+            collection.deleteOne({ "channelId": game.channelId }, function (err, obj) {
+                console.log("1 document deleted");
+            });
         }
         return response;
     }

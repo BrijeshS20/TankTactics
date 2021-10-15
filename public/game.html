@@ -116,8 +116,9 @@
 
             </div>
             <div id="game" class="row">
+                <!-- Alerts to be displayed here -->
+                <div id="alertspawn"></div>
                 <!--Menu Showing List Of Active Lobbies-->
-
                 <div id="lobbies" class="col-2 border-end">
 
                 </div>
@@ -151,7 +152,7 @@
     </script>
 
     <script id="lobby" type="x-tmpl-mustache">
-            <button class="btn btn-outline-light btn-sm " onclick="channelId = '{{channelId}}';RenderMap();">Join lobbby {{channelName}} in {{serverName}}</button>
+            <button class="btn btn-outline-light btn-sm " onclick="channelId = '{{channelId}}';RenderMap();">Join lobby {{channelName}} in {{serverName}}</button>
     </script>
 
 
@@ -168,7 +169,7 @@
     </script>
     <script>
         let channelId = 0;
-       
+        let alertspawn = document.querySelector("#alertspawn");
         // Helper Functions:
         function getUrlVars() {
             let vars = {};
@@ -177,9 +178,16 @@
             });
             return vars;
         }
-
+        function notify(message) {
+            alertspawn.innerHTML = `
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        `;
+        }
         function move(id, type) {
-            $.get('https://tanktactics.uc.r.appspot.com/move', { "channelId": channelId, "userId": getUrlVars()['userId'].split('#')[0], "move": type, "id": id }, resp => { RenderMap(); });
+            $.get('https://tanktactics.uc.r.appspot.com/move', { "channelId": channelId, "userId": getUrlVars()['userId'].split('#')[0], "move": type, "id": id }, resp => { notify(resp.message);RenderMap(); });
         }
         //Draw RenderMap
         function RenderMap() {
