@@ -78,10 +78,9 @@ client.connect(err => {
             var action = UpdateGameMovement(game, req.query.userId, req.query.move, req.query.id);
             if (typeof req.query.bot == 'undefined' || req.query.move.toLowerCase() == 'attack') {
                 var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
-                if (actionSave.message.includes('move') || actionSave.message.includes('increased') ) {
-
-                } else {
+                if (actionSave.code != 405) {
                     previousAction.push(actionSave);
+                }
                 }
             }
             res.setHeader("Access-Control-Allow-Origin", "*").send(action);
@@ -379,11 +378,12 @@ client.connect(err => {
                                                     response.code = 100;
                                                     response.message = user.name + " has killed " + enemy.name + " and has won.";
                                                 } 
-                                               
                                             } else {
+                                              
                                                 response.message = user.name + " has attacked " + enemy.name;
                                             }
                                         } else {
+                                            response.code = 405;
                                             response.message = user.name + " has tried to attack " + enemy.name;
                                         }
                                     } else {
@@ -451,6 +451,8 @@ client.connect(err => {
         }
         if (response.code == 100) {
             collection.deleteOne({ "channelId": game.channelId }, function (err, obj) {
+                if (err) throw err;
+
                 console.log("1 document deleted");
             });
         }
