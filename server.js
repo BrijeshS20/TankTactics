@@ -53,8 +53,12 @@ client.connect(err => {
         });
     });
 
+    async function getLeaderBoard() {
+        var leaderBoard = await userCollection.find({}).sort({ "wins": -1 }).limit(10);
+        return leaderBoard.toArray();
+    }
     app.get('/leaderboard', (req, res) => {
-        userCollection.find().sort({ "wins": -1 }).limit(10).then(leaderboard => { res.send(leaderboard); });
+        getLeaderBoard().then(leaderBoard => { res.send(leaderBoard); });
       
     });
 
@@ -85,15 +89,16 @@ client.connect(err => {
 
     app.get('/move', (req, res) => {
         getGameById(req.query.channelId).then(game => {
-            var action = UpdateGameMovement(game, req.query.userId, req.query.move, req.query.id);
-            if (typeof req.query.bot == 'undefined') {
-                var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
-                if (actionSave.code != 405) {
-                    previousAction.push(actionSave);
-                }
+            UpdateGameMovement(game, req.query.userId, req.query.move, req.query.id).then(action => {
+                if (typeof req.query.bot == 'undefined') {
+                    var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
+                    if (actionSave.code != 405) {
+                        previousAction.push(actionSave);
+                    }
 
-            }
-            res.setHeader("Access-Control-Allow-Origin", "*").send(action);
+                }
+                res.setHeader("Access-Control-Allow-Origin", "*").send(action);
+            });
         });
     });
 
