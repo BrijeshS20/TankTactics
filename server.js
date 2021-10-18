@@ -400,6 +400,25 @@ client.connect(err => {
                                             if (enemy.health == 0) {
                                                 var userStats = await userCollection.findOne({ "userId": user.id });
                                                 var enemyStats = await userCollection.findOne({ "userId": enemy.id });
+
+                                               
+                                                if (userStats === null) {
+                                                    userStats = createUserStats(user.id);
+                                                    userCollection.insertOne(userStats, function (err, res) {
+                                                        if (err) console.log(err);
+                                                    }
+                                                    );
+                                                }
+
+                                                if (enemyStats === null) {
+                                                    enemyStats = createUserStats(enemy.id);
+                                                    userCollection.insertOne(enemyStats, function (err, res) {
+                                                        if (err) console.log(err);
+                                                       
+                                                    }
+                                                    );
+                                                }
+
                                                 userStats.kills++;
                                                 enemyStats.deaths++;
 
@@ -467,6 +486,24 @@ client.connect(err => {
                         var userStats = await userCollection.findOne({ "userId": user.id });
                         var enemyStats = await userCollection.findOne({ "userId": enemy.id });
                         if (enemy.health > 0) {
+
+                            if (userStats === null) {
+                                userStats = createUserStats(user.id);
+                                userCollection.insertOne(userStats, function (err, res) {
+                                    if (err) console.log(err);
+                                }
+                                );
+                            }
+
+                            if (enemyStats === null) {
+                                enemyStats = createUserStats(enemy.id);
+                                userCollection.insertOne(enemyStats, function (err, res) {
+                                    if (err) console.log(err);
+
+                                }
+                                );
+                            }
+
                             userStats.apGiven++;
                             enemyStats.apRecived++;
 
@@ -536,7 +573,7 @@ client.connect(err => {
     async function join(channelId, userId, name, channelName, serverName, gameData) {
 
         var userStats = await userCollection.findOne({ "userId": userId });
-        if (userStats.length == 0) {
+        if (userStats === null) {
             userStats = createUserStats(userId);
             userCollection.insertOne(userStats, function (err, res) {
                 if (err) console.log(err);
