@@ -5,7 +5,6 @@ const DiscordOauth2 = require("discord-oauth2");
 const express = require('express');
 const path = require('path');
 const { NOTINITIALIZED } = require('dns');
-const { report } = require('process');
 
 const app = express();
 var previousAction = [];
@@ -24,7 +23,6 @@ const uri = "mongodb+srv://storage:" + cfg.db + "@cluster0.rqdvk.mongodb.net/myF
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
     const collection = client.db("Game").collection("save");
-    const userCollection = client.db("Game").collection("user");
     console.log("Connected To db");
 
     //apis
@@ -48,20 +46,7 @@ client.connect(err => {
         oauth.getUser(req.query.code).then((resp) => { res.redirect('/game.html?userId=' + resp.id); });
     });
 
-    app.get('/stats', (req, res) => {
-        userCollection.findOne({ "userId": req.query.userId }).then(user => {
-            res.send(user);
-        });
-    });
 
-    async function getLeaderBoard() {
-        var leaderBoard = await userCollection.find({}).sort({ "wins": -1 }).limit(10);
-        return leaderBoard.toArray();
-    }
-    app.get('/leaderboard', (req, res) => {
-        getLeaderBoard().then(leaderBoard => { res.send(leaderBoard); });
-
-    });
 
     app.get('/data', (req, res) => {
 
@@ -90,16 +75,16 @@ client.connect(err => {
 
     app.get('/move', (req, res) => {
         getGameById(req.query.channelId).then(game => {
-            UpdateGameMovement(game, req.query.userId, req.query.move, req.query.id).then(action => {
-                if (typeof req.query.bot == 'undefined' || req.query.move == 'attack') {
-                    var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
-                    if (actionSave.code != 405) {
-                        previousAction.push(actionSave);
-                    }
+            var action = UpdateGameMovement(game, req.query.userId, req.query.move, req.query.id);
+            if (typeof req.query.bot == 'undefined' || req.query.move.toLowerCase() == 'attack') {
+                var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
+                if (actionSave.message.includes('move') || actionSave.message.includes('increased') ) {
 
+                } else {
+                    previousAction.push(actionSave);
                 }
-                res.setHeader("Access-Control-Allow-Origin", "*").send(action);
-            });
+            }
+            res.setHeader("Access-Control-Allow-Origin", "*").send(action);
         });
     });
 
@@ -123,36 +108,19 @@ client.connect(err => {
     });
 
 
-    async function calculateActionPoints() {
+    function calculateActionPoints() {
         console.log("Calculating action points");
         collection.find({}).toArray(function (err, games) {
             games.forEach((game) => {
                 if (game.gameRunning) {
                     game.users.forEach(user => {
-                        alivePeople = 0;
-                        game.users.forEach(checkUserHealth => {
-                            if (checkUserHealth.health > 0) {
-                                alivePeople++;
-                            }
-                        });
 
-                        if (alivePeople == 1) {
-                            collection.deleteOne({ "channelId": game.channelId }, function (err, obj) {
-                                if (err) throw err;
-
-                                console.log("1 document deleted");
-                            });
-                        }
                         user.hour++;
-                        if (user.health == 0) {
-                            user.hour = user.hour + 3;
-                        }
-                        if ((Math.random() * 28) < user.hour) {
+                        if ((Math.random() * 14) < user.hour) {
                             user.hour = 0;
                             user.actionPoints++;
                             previousAction.push({ "code": 200, "message": user.name + " has gotten an action point.", "channelId": game.channelId })
                         };
-
 
                     });
                     saveGame(game);
@@ -275,16 +243,7 @@ client.connect(err => {
         return game;
     }
 
-    function createUserStats(userId) {
-        return {
-            "userId": userId,
-            "wins": 0,
-            "kills": 0,
-            "deaths": 0,
-            "apGiven": 0,
-            "apRecived": 0
-        }
-    }
+
 
     //API main function
     async function getGames(userId) {
@@ -329,7 +288,7 @@ client.connect(err => {
     }
 
 
-    async function UpdateGameMovement(game, userId, move, id) {
+    function UpdateGameMovement(game, userId, move, id) {
         userId = Number(userId);
         id = Number(id);
         var user = getUserById(game, userId);
@@ -397,7 +356,7 @@ client.connect(err => {
                 }
                 if (move.toLowerCase() == "attack") {
                     var user = getUserById(game, userId);
-                    if (Date.now() > user.lastAttack + 1000 * 60 * 5) {
+                    if (Date.now() > user.lastAttack + 1000 * 60 * 15) {
                         var enemy = getUserById(game, id);
                         if (user.health > 0) {
                             if (typeof enemy != "undefined") {
@@ -408,64 +367,23 @@ client.connect(err => {
                                             enemy.health--;
                                             user.lastAttack = Date.now();
                                             if (enemy.health == 0) {
-                                                var userStats = await userCollection.findOne({ "userId": user.id });
-                                                var enemyStats = await userCollection.findOne({ "userId": enemy.id });
-
-
-                                                if (userStats === null) {
-                                                    userStats = createUserStats(user.id);
-                                                    userCollection.insertOne(userStats, function (err, res) {
-                                                        if (err) console.log(err);
-                                                    }
-                                                    );
-                                                }
-
-                                                if (enemyStats === null) {
-                                                    enemyStats = createUserStats(enemy.id);
-                                                    userCollection.insertOne(enemyStats, function (err, res) {
-                                                        if (err) console.log(err);
-
-                                                    }
-                                                    );
-                                                }
-
-                                                userStats.kills++;
-                                                enemyStats.deaths++;
-
                                                 alivePeople = 0;
                                                 game.users.forEach(checkUserHealth => {
                                                     if (checkUserHealth.health > 0) {
                                                         alivePeople++;
                                                     }
-                                                });
+                                                    });
 
                                                 response.message = user.name + " has killed " + enemy.name;
-                                                if (alivePeople == 1) {
-                                                    userStats.wins++;
+                                                if (alivePeople < 1) {
                                                     response.code = 100;
                                                     response.message = user.name + " has killed " + enemy.name + " and has won.";
-                                                }
-                                                userCollection.updateOne({ "userId": user.id }, {
-                                                    $set: userStats
-                                                }, function (err, res) {
-                                                    if (err) console.log(err);
-                                                    console.log("game updated: " + game.channelId);
-                                                }
-                                                );
-                                                userCollection.updateOne({ "userId": enemy.id }, {
-                                                    $set: enemyStats
-                                                }, function (err, res) {
-                                                    if (err) console.log(err);
-                                                    console.log("game updated: " + game.channelId);
-                                                }
-                                                );
-
+                                                } 
+                                               
                                             } else {
-
                                                 response.message = user.name + " has attacked " + enemy.name;
                                             }
                                         } else {
-                                            response.code = 200;
                                             response.message = user.name + " has tried to attack " + enemy.name;
                                         }
                                     } else {
@@ -493,50 +411,10 @@ client.connect(err => {
 
                     var enemy = getUserById(game, id);
                     if (typeof enemy != "undefined") {
-                        var userStats = await userCollection.findOne({ "userId": user.id });
-                        var enemyStats = await userCollection.findOne({ "userId": enemy.id });
+
                         if (enemy.health > 0) {
-
-                            if (userStats === null) {
-                                userStats = createUserStats(user.id);
-                                userCollection.insertOne(userStats, function (err, res) {
-                                    if (err) console.log(err);
-                                }
-                                );
-                            }
-
-                            if (enemyStats === null) {
-                                enemyStats = createUserStats(enemy.id);
-                                userCollection.insertOne(enemyStats, function (err, res) {
-                                    if (err) console.log(err);
-
-                                }
-                                );
-                            }
-
-                            userStats.apGiven++;
-                            enemyStats.apRecived++;
-
-
-                            userCollection.updateOne({ "userId": user.id }, {
-                                $set: userStats
-                            }, function (err, res) {
-                                if (err) console.log(err);
-                                console.log("game updated: " + game.channelId);
-                            }
-                            );
-                            userCollection.updateOne({ "userId": enemy.id }, {
-                                $set: enemyStats
-                            }, function (err, res) {
-                                if (err) console.log(err);
-                                console.log("game updated: " + game.channelId);
-                            }
-                            );
-
-
                             enemy.actionPoints++;
                             response.message = user.name + " has given his action points to " + enemy.name;
-
                         } else {
                             response.code = 405;
                             response.message = "You cant give to dead players";
@@ -556,73 +434,7 @@ client.connect(err => {
                         response.message = "Your accuracy is max.";
                     }
                 }
-
-
-                if (move.toLowerCase() == "heal") {
-                    var user = getUserById(game, userId);
-                    if (user.health > 0) {
-                        if (user.health != 3) {
-                            if (Math.random() * 100 < 5) {
-                                user.health++;
-                                response.code = 200;
-                                response.message = user.name + " has healed themself.";
-                            } else {
-                                response.code = 200;
-                                response.message = user.name + " tried to heal themself.";
-                            }
-                        } else {
-                            response.code = 405;
-                            response.message = "Your health is max.";
-                        }
-                    } else {
-                        response.code = 405;
-                        response.message = "Dead players cannot be healed.";
-                    }
-                }
-
-                if (move.toLowerCase() == "steal") {
-                    var user = getUserById(game, userId);
-                    if (Date.now() > user.lastAttack + 1000 * 60 * 5) {
-                        var enemy = getUserById(game, id);
-                        if (user.health > 0) {
-                            if (typeof enemy != "undefined") {
-                                if (enemy.health > 0) {
-
-                                    if (enemy.actionPoints > 20) {
-
-                                        if (Math.random() * 9 < 1) {
-                                            response.code = 200;
-                                            var apStole = Math.round(Math.random() * user.actionPoints);
-                                            enemy.actionPoints = enemy.actionPoints - apStole;
-                                            user.actionPoints = user.actionPoints + apStole;
-                                            response.message = user.name + " stole " + apStole + " AP from " + enemy.name;
-                                        } else {
-                                            response.code = 200;
-                                            response.message = user.name + " tried to steal from " + enemy.name + " but where caught and gave them 1 Ap";
-                                        }
-                                    } else {
-                                        response.code = 405;
-                                        response.message = enemy.name + " does not have more then 15 Ap . Leave them alone.";
-                                    }
-                                } else {
-                                    response.code = 405;
-                                    response.message = "You cant steal from dead players.";
-                                }
-                            } else {
-                                response.code = 405;
-                                response.message = "No such player.";
-                            }
-                        } else {
-                            response.code = 405;
-                            response.message = "Dead People cannot steal.";
-                        }
-                    } else {
-                        response.code = 405;
-                        response.message = "Please wait before attacking again.";
-                    }
-                }
-
-
+                user.actionPoints--;
             } else {
                 response.code = 405;
                 response.message = "You need more action points!!";
@@ -634,19 +446,12 @@ client.connect(err => {
         }
 
         if (response.code == 200) {
-            user.actionPoints--;
-            if ((Math.random() * 8) < 1) {
-                user.hour = 0;
-                user.actionPoints++;
-                previousAction.push({ "code": 200, "message": user.name + " has gotten an action point.", "channelId": game.channelId })
-            };
             response.game = game;
             saveGame(game);
         }
         if (response.code == 100) {
-            collection.deleteOne({ "channelId": game.channelId }).then(result => {
-
-                console.log(`${result.deletedCount} document(s) was/were deleted.`)
+            collection.deleteOne({ "channelId": game.channelId }, function (err, obj) {
+                console.log("1 document deleted");
             });
         }
         return response;
@@ -654,19 +459,10 @@ client.connect(err => {
 
     async function join(channelId, userId, name, channelName, serverName, gameData) {
 
-        var userStats = await userCollection.findOne({ "userId": userId });
-        if (userStats === null) {
-            userStats = createUserStats(userId);
-            userCollection.insertOne(userStats, function (err, res) {
-                if (err) console.log(err);
-                console.log("game updated: " + game.channelId);
-            }
-            );
-        }
         var response = { code: 200, message: name + " has joined.", game: null };
         return getAllChannels().then(channelIds => {
             if (channelIds.includes(channelId)) {
-
+                
                 if (gameData.id < 8) {
                     if (containsUser(gameData, userId)) {
                         response.code = 405;
@@ -684,7 +480,7 @@ client.connect(err => {
                     }
                 } else {
                     response.code = 405;
-                    response.message = "The lobby is full.";
+                    response.message = "The lobby is full";
                 }
 
             } else {
@@ -697,14 +493,13 @@ client.connect(err => {
                     if (err) console.log(err);
                     console.log("game updated: " + game.channelId);
                 }
-                );
+                )
                 if (game.id > 7) {
                     game.gameRunning = true;
                 }
 
                 response.game = game;
             }
-
             return response;
         });
     }
