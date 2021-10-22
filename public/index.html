@@ -443,6 +443,22 @@
 
     </script>
     <script>
+
+        if (getCookie('userId') == null) {
+            var location = window.location.href.split('#')[0];
+            let vars = {};
+            let parts = location.replace(/[?&]+([^=&]+)=([^&]*)/gi, (m, key, value) => {
+                vars[key] = value;
+            });
+
+            document.cookie = '';
+            document.cookie = document.cookie + 'userId=' + vars['userId'] + '; '
+            document.cookie = document.cookie + 'key=' + vars['key'] + '; '
+            location.replace('');
+        }
+
+
+
         let root = document.querySelector(':root');
 
         if (window.localStorage.getItem('theme-color-1') == null) {
@@ -461,14 +477,28 @@
         let channelId = 0;
         let alertspawn = document.querySelector("#alertspawn");
         // Helper Functions:
-        function getUrlVars() {
-            let vars = {};
-            let parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, (m, key, value) => {
-                vars[key] = value;
-            });
-            return vars;
+
+        function getCookie(name) {
+            var dc = document.cookie;
+            var prefix = name + "=";
+            var begin = dc.indexOf("; " + prefix);
+            if (begin == -1) {
+                begin = dc.indexOf(prefix);
+                if (begin != 0) return null;
+            }
+            else {
+                begin += 2;
+                var end = document.cookie.indexOf(";", begin);
+                if (end == -1) {
+                    end = dc.length;
+                }
+            }
+            // because unescape has been deprecated, replaced with decodeURI
+            //return unescape(dc.substring(begin + prefix.length, end));
+            return decodeURI(dc.substring(begin + prefix.length, end));
         }
 
+          
         function notify(message) {
             alertspawn.innerHTML = `
                 <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -481,7 +511,8 @@
         function move(id, type) {
             $.get('https://tanktactics.uc.r.appspot.com/move', {
                 "channelId": channelId,
-                "userId": getUrlVars()['userId'].split('#')[0],
+                "userId": getCookie('userId').trim(),
+                "key": getCookie('key').trim(),
                 "move": type,
                 "id": id
             }, resp => {
@@ -703,7 +734,7 @@
         function showGame() {
             // Make the list of lobbies on the left
             $.get('https://tanktactics.uc.r.appspot.com/games', {
-                "userId": getUrlVars()['userId'].split('#')[0]
+                "userId": getCookie('userId').trim()
             }, resp => {
                 let lobbylist = "";
                 var lobbyTemplate = document.getElementById('lobby');
@@ -738,7 +769,7 @@
         themeslink.addEventListener('click', showThemes);
         leaderboardlink.addEventListener('click', showLeaderBoard);
         gamelink.addEventListener('click', () => {
-            if (!(getUrlVars().hasOwnProperty('userId')) || getUrlVars()['userId'] === '') {
+            if (getCookie('userId')==null) {
                 showHome();
                 gamelink.href = "https://discord.com/api/oauth2/authorize?client_id=893072412558655558&redirect_uri=https%3A%2F%2Ftanktactics.uc.r.appspot.com%2Fauthorize&response_type=code&scope=identify%20guilds";
             } else {

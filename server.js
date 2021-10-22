@@ -24,6 +24,7 @@ const uri = "mongodb+srv://storage:" + cfg.db + "@cluster0.rqdvk.mongodb.net/myF
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
     const collection = client.db("Game").collection("save");
+    const accessCollection = client.db("Game").collection("acces");
     const userCollection = client.db("Game").collection("user");
     console.log("Connected To db");
 
@@ -45,7 +46,17 @@ client.connect(err => {
 
     });
     app.get('/user', (req, res) => {
-        oauth.getUser(req.query.code).then((resp) => { res.redirect('/?userId=' + resp.id); });
+        oauth.getUser(req.query.code).then((resp) => {
+            getAccessToken(resp.id).then(login => {
+                if (login == null) {
+                    setAccessToken(req.query.code, resp.id);
+                    res.redirect('/?userId=' + resp.id + '&key=' + req.query.code);
+                } else {
+                    res.redirect('/?userId=' + resp.id + '&key=' + login.token);
+                }
+            });
+
+        });
     });
 
     app.get('/stats', (req, res) => {
@@ -69,13 +80,22 @@ client.connect(err => {
     });
 
     app.get('/join', (req, res) => {
-        getGameById(req.query.channelId).then(game => {
-            console.log("joining user");
+        var login = getAccessToken(req.query.userId);
+        if (req.query.key == cfg.bot || login != null) {
+            if (req.query.key == cfg.bot || login.token == req.query.key) {
+                getGameById(req.query.channelId).then(game => {
+                    console.log("joining user");
 
-            join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName, game).then(action => {
-                res.send(action);
-            });
-        });
+                    join(req.query.channelId, req.query.userId, req.query.name, req.query.channelName, req.query.serverName, game).then(action => {
+                        res.send(action);
+                    });
+                });
+            } else {
+                res.send({ "code": 405, "message": "Session Timed Out. Please reload page" });
+            }
+        } else {
+            res.send({ "code": 405, "message": "Session Timed Out. Please reload page" });
+        }1
     });
 
     app.get('/bot', (req, res) => {
@@ -89,18 +109,27 @@ client.connect(err => {
 
 
     app.get('/move', (req, res) => {
-        getGameById(req.query.channelId).then(game => {
-            UpdateGameMovement(game, req.query.userId, req.query.move, req.query.id).then(action => {
-                if (typeof req.query.bot == 'undefined' || req.query.move == 'attack') {
-                    var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
-                    if (actionSave.code != 405) {
-                        previousAction.push(actionSave);
-                    }
+        var login = getAccessToken(req.query.userId);
+        if (req.query.key == cfg.bot || login != null) {
+            if (req.query.key == cfg.bot || login.token == req.query.key) {
+                getGameById(req.query.channelId).then(game => {
+                    UpdateGameMovement(game, req.query.userId, req.query.move, req.query.id).then(action => {
+                        if (typeof req.query.bot == 'undefined' || req.query.move == 'attack') {
+                            var actionSave = { "code": action.code, "message": action.message, "channelId": req.query.channelId };
+                            if (actionSave.code != 405) {
+                                previousAction.push(actionSave);
+                            }
 
-                }
-                res.setHeader("Access-Control-Allow-Origin", "*").send(action);
-            });
-        });
+                        }
+                        res.setHeader("Access-Control-Allow-Origin", "*").send(action);
+                    });
+                });
+            } else {
+                res.send({ "code": 405, "message": "Session Timed Out. Please reload page" });
+            }
+        } else {
+            res.send({ "code": 405, "message": "Session Timed Out. Please reload page" });
+        }
     });
 
     app.get('/image', (req, res) => {
@@ -111,9 +140,18 @@ client.connect(err => {
     });
 
     app.get('/games', (req, res) => {
-        getGames(req.query.userId).then(lobbies => {
-            res.setHeader("Access-Control-Allow-Origin", "*").send(lobbies);
-        });
+        var login = getAccessToken(req.query.userId);
+        if (req.query.key == cfg.bot || login != null) {
+            if (req.query.key == cfg.bot || login.token == req.query.key) {
+                getGames(req.query.userId).then(lobbies => {
+                    res.setHeader("Access-Control-Allow-Origin", "*").send(lobbies);
+                });
+            } else {
+                res.send({ "code": 405, "message": "Session Timed Out. Please reload page" });
+            }
+        } else {
+            res.send({ "code": 405, "message": "Session Timed Out. Please reload page" });
+        }
     });
 
     const PORT = process.env.PORT || 8080;
@@ -122,7 +160,17 @@ client.connect(err => {
         calculateActionPoints();
     });
 
-
+    async function getAccessToken(userId) {
+        var loginCred = await accessCollection.find({ "userId": userId });
+        return loginCred;
+    }
+    async function setAccessToken(token, userId) {
+        accessCollection.find({ "userId": userId }).then(login => {
+            if (login == null) {
+                accessCollection.insertOne({ "userId": userId, "token": token });
+            }
+        });
+    }
     async function calculateActionPoints() {
         console.log("Calculating action points");
         collection.find({}).toArray(function (err, games) {
@@ -272,6 +320,9 @@ client.connect(err => {
 
     async function getGameById(channelId) {
         var game = await collection.findOne({ "channelId": channelId });
+        if (game == null) {
+            createGame(channelId, "", "");
+        }
         return game;
     }
 
