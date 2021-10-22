@@ -613,7 +613,7 @@ client.connect(err => {
                     var user = getUserById(game, userId);
                     if (user.health > 0) {
                         if (user.health != 3) {
-                            if (Math.random() * 100 < 5) {
+                            if (Math.random() * 100 < 15) {
                                 user.health++;
                                 response.code = 200;
                                 response.message = user.name + " has healed themself.";
@@ -641,7 +641,7 @@ client.connect(err => {
 
                                     if (enemy.actionPoints > 15) {
 
-                                        if (Math.random() * 9 < 1) {
+                                        if (Math.random() * 4 < 1) {
                                             response.code = 200;
                                             var apStole = Math.round(Math.random() * user.actionPoints);
                                             enemy.actionPoints = enemy.actionPoints - apStole;

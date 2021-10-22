@@ -324,6 +324,32 @@
                             So in order to win you must talk to other player form alliances and in the end you may have to betray them.
                         </div>
                         <div class="carousel-item">
+                            Movement
+                            <br />
+                            <br />
+                            1. Up    <br /> discord command:!moveup
+                            <br />
+                            2. Down   <br />discord command:!movedown
+                            <br />
+                            3. Right  <br />discord command:!moveright
+                            <br />
+                            4. Left  <br /> discord command:!moveleft
+                        </div>
+                        <div class="carousel-item">
+                            Commands
+                            <br />
+                            <br />
+                            1. Heal:    A 15% chance of healing <br /> discord command:!heal
+                            <br />
+                            2. Steal:  A 5 min cooldown shared with attack , The person you are stealing from need to have <br /> minimum 15AP <br />  discord command:!steal < mention of user you are stealing from>
+                            <br />
+                            3. Attack <br /> discord command: !attack  < mention of user you are attacking >
+                            <br />
+                            4. Give: Give another player a AP     discord command:!give  < mention of user you are stealing from> < number of ap>
+                            <br />
+                            5. Upgrade: Increase chance of attack hitting an opponent. <br /> discord command: !upgrade
+                        </div>
+                        <div class="carousel-item">
                             In order to win this game you must team up talk to as many people as possible make alliances as you will not be able to win alone.
                             <br />
                             If you face any issues, contact one of the following staff at discord:
@@ -757,24 +783,27 @@
         themeslink.addEventListener('click', showThemes);
         leaderboardlink.addEventListener('click', showLeaderBoard);
 
-        if (getCookie('userId') == null) {
-            var location = window.location.href.split('#')[0];
-            let vars = {};
-            let parts = location.replace(/[?&]+([^=&]+)=([^&]*)/gi, (m, key, value) => {
-                vars[key] = value;
-            });
+      
+        let vars = {};
+        let parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, (m, key, value) => {
+            vars[key] = value;
+        });
+        console.log(vars);
 
-            document.cookie = '';
-            document.cookie = document.cookie + 'userId=' + vars['userId'] + '; '
-            document.cookie = document.cookie + 'key=' + vars['key'] + '; '
-            location.replace('');
+        if (vars['userId'] != null) {
+            if (getCookie('userId') == null) {
+
+                document.cookie = '';
+                document.cookie = 'userId=' + vars['userId'] + '; ' + 'key=' + vars['key'] + '; '
+                location.replace('');
+            }
         }
-
         gamelink.addEventListener('click', () => {
             if (getCookie('userId')==null) {
                 showHome();
                 gamelink.href = "https://discord.com/api/oauth2/authorize?client_id=893072412558655558&redirect_uri=https%3A%2F%2Ftanktactics.uc.r.appspot.com%2Fauthorize&response_type=code&scope=identify%20guilds";
             } else {
+               
                 showHome();
                 gamelink.href = "#game";
                 showGame();
