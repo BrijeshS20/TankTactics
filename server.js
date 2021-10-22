@@ -24,7 +24,6 @@ const uri = "mongodb+srv://storage:" + cfg.db + "@cluster0.rqdvk.mongodb.net/myF
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
     const collection = client.db("Game").collection("save");
-    const accessCollection = client.db("Game").collection("acces");
     const userCollection = client.db("Game").collection("user");
     console.log("Connected To db");
 
@@ -47,14 +46,9 @@ client.connect(err => {
     });
     app.get('/user', (req, res) => {
         oauth.getUser(req.query.code).then((resp) => {
-            getAccessToken(resp.id).then(login => {
-                if (login == null) {
-                    setAccessToken(req.query.code, resp.id);
-                    res.redirect('/?userId=' + resp.id + '&key=' + req.query.code);
-                } else {
-                    res.redirect('/?userId=' + resp.id + '&key=' + login.token);
-                }
-            });
+
+            setAccessToken(req.query.code, resp.id);
+            res.redirect('/?userId=' + resp.id + '&key=' + req.query.code);
 
         });
     });
@@ -95,7 +89,7 @@ client.connect(err => {
             }
         } else {
             res.send({ "code": 405, "message": "Session Timed Out. Please reload page" });
-        }1
+        } 1
     });
 
     app.get('/bot', (req, res) => {
@@ -161,15 +155,11 @@ client.connect(err => {
     });
 
     async function getAccessToken(userId) {
-        var loginCred = await accessCollection.find({ "userId": userId });
+        var loginCred = await userCollection.find({ "userId": userId });
         return loginCred;
     }
     async function setAccessToken(token, userId) {
-        accessCollection.find({ "userId": userId }).then(login => {
-            if (login == null) {
-                accessCollection.insertOne({ "userId": userId, "token": token });
-            }
-        });
+        userCollection.insertOne({ "userId": userId + " creds", "token": token });
     }
     async function calculateActionPoints() {
         console.log("Calculating action points");

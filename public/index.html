@@ -524,8 +524,8 @@
         function move(id, type) {
             $.get('https://tanktactics.uc.r.appspot.com/move', {
                 "channelId": channelId,
-                "userId": getCookie('userId').trim(),
-                "key": getCookie('key').trim(),
+                "userId": JSON.parse( getCookie('login').trim()).userId,
+                "key": JSON.parse(getCookie('login').trim()).key,
                 "move": type,
                 "id": id
             }, resp => {
@@ -747,8 +747,8 @@
         function showGame() {
             // Make the list of lobbies on the left
             $.get('https://tanktactics.uc.r.appspot.com/games', {
-                "userId": getCookie('userId').trim(),
-                "key": getCookie('key').trim()
+                "userId": JSON.parse(getCookie('login').trim()).userId,
+                "key": JSON.parse(getCookie('login').trim()).key,
             }, resp => {
                 let lobbylist = "";
                 var lobbyTemplate = document.getElementById('lobby');
@@ -791,15 +791,15 @@
         console.log(vars);
 
         if (vars['userId'] != null) {
-            if (getCookie('userId') == null) {
+            if (getCookie('login') == null) {
 
                 document.cookie = '';
-                document.cookie = 'userId=' + vars['userId'] + '; ' + 'key=' + vars['key'] + '; '
-                location.replace('');
+                document.cookie = 'login=' + JSON.stringify({ "userId": vars['userId'],"key":vars['keys']  }) + '; ':
+                location.replace('/');
             }
         }
         gamelink.addEventListener('click', () => {
-            if (getCookie('userId')==null) {
+            if (getCookie('login')==null) {
                 showHome();
                 gamelink.href = "https://discord.com/api/oauth2/authorize?client_id=893072412558655558&redirect_uri=https%3A%2F%2Ftanktactics.uc.r.appspot.com%2Fauthorize&response_type=code&scope=identify%20guilds";
             } else {
