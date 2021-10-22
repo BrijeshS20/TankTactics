@@ -147,7 +147,7 @@ client.connect(err => {
                         if (user.health == 0) {
                             user.hour = user.hour + 3;
                         }
-                        if ((Math.random() * 28) < user.hour) {
+                        if ((Math.random() * 14) < user.hour) {
                             user.hour = 0;
                             user.actionPoints++;
                             previousAction.push({ "code": 200, "message": user.name + " has gotten an action point.", "channelId": game.channelId })
