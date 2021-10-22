@@ -132,7 +132,9 @@ client.connect(err => {
             DrawNodeJS(game).pngStream().pipe(res);
         });
     });
-
+    app.get('/game.html', (req, res) => {
+        res.redirect('/#help');
+    });
     app.get('/games', (req, res) => {
         var login = getAccessToken(req.query.userId);
         if (req.query.key == cfg.bot || login != null) {

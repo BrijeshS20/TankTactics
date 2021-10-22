@@ -794,10 +794,11 @@
             if (getCookie('login') == null) {
 
                 document.cookie = '';
-                document.cookie = 'login=' + JSON.stringify({ "userId": vars['userId'],"key":vars['keys']  }) + '; ':
+                document.cookie = 'login=' + JSON.stringify({ "userId": vars['userId'], "key": vars['keys'] }) + '; ';
                 location.replace('/');
             }
         }
+       
         gamelink.addEventListener('click', () => {
             if (getCookie('login')==null) {
                 showHome();
@@ -814,6 +815,12 @@
         lightmode.addEventListener('click', enterLightMode);
         darkmode.addEventListener('click', enterDarkMode);
         colorpicker.addEventListener('click', enterCustomTheme);
+
+        if (window.location.href.split('#')[1] !== null) {
+            if (window.location.href.split('#')[1] == 'help') {
+                showHelp();
+            }
+        }
 
         setInterval(RenderMap, 1000 * 60);
 
