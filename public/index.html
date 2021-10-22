@@ -444,19 +444,6 @@
     </script>
     <script>
 
-        if (getCookie('userId') == null) {
-            var location = window.location.href.split('#')[0];
-            let vars = {};
-            let parts = location.replace(/[?&]+([^=&]+)=([^&]*)/gi, (m, key, value) => {
-                vars[key] = value;
-            });
-
-            document.cookie = '';
-            document.cookie = document.cookie + 'userId=' + vars['userId'] + '; '
-            document.cookie = document.cookie + 'key=' + vars['key'] + '; '
-            location.replace('');
-        }
-
 
 
         let root = document.querySelector(':root');
@@ -734,7 +721,8 @@
         function showGame() {
             // Make the list of lobbies on the left
             $.get('https://tanktactics.uc.r.appspot.com/games', {
-                "userId": getCookie('userId').trim()
+                "userId": getCookie('userId').trim(),
+                "key": getCookie('key').trim()
             }, resp => {
                 let lobbylist = "";
                 var lobbyTemplate = document.getElementById('lobby');
@@ -768,6 +756,20 @@
         helplink.addEventListener('click', showHelp);
         themeslink.addEventListener('click', showThemes);
         leaderboardlink.addEventListener('click', showLeaderBoard);
+
+        if (getCookie('userId') == null) {
+            var location = window.location.href.split('#')[0];
+            let vars = {};
+            let parts = location.replace(/[?&]+([^=&]+)=([^&]*)/gi, (m, key, value) => {
+                vars[key] = value;
+            });
+
+            document.cookie = '';
+            document.cookie = document.cookie + 'userId=' + vars['userId'] + '; '
+            document.cookie = document.cookie + 'key=' + vars['key'] + '; '
+            location.replace('');
+        }
+
         gamelink.addEventListener('click', () => {
             if (getCookie('userId')==null) {
                 showHome();
