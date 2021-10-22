@@ -34,9 +34,6 @@
     </Content>
     <Content Include="package.json" />
     <Content Include="public\index.html" />
-    <Content Include="public\game.html">
-      <SubType>Code</SubType>
-    </Content>
     <Content Include="README.md" />
     <Content Include="server.js" />
   </ItemGroup>

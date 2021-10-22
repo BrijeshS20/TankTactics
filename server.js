@@ -45,7 +45,7 @@ client.connect(err => {
 
     });
     app.get('/user', (req, res) => {
-        oauth.getUser(req.query.code).then((resp) => { res.redirect('/game.html?userId=' + resp.id); });
+        oauth.getUser(req.query.code).then((resp) => { res.redirect('/?userId=' + resp.id); });
     });
 
     app.get('/stats', (req, res) => {
@@ -588,7 +588,7 @@ client.connect(err => {
                             if (typeof enemy != "undefined") {
                                 if (enemy.health > 0) {
 
-                                    if (enemy.actionPoints > 20) {
+                                    if (enemy.actionPoints > 15) {
 
                                         if (Math.random() * 9 < 1) {
                                             response.code = 200;

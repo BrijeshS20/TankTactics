@@ -1,477 +1,763 @@
 <html lang="en" class="">
+
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tank Tactics</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.1.1/cerulean/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.1.1/cerulean/bootstrap.min.css" />
     <style>
-
-        body {
-            background-color: #f2f1ed;
+        :root {
+            --theme-color-1: #343a40;
+            --theme-color-2: #ffffff;
+            --subtheme-color-1: #6c757d;
+            --subtheme-color-2: antiquewhite;
         }
 
-        .wrap {
-            position: absolute;
-            bottom: 0;
-            top: 0;
-            left: 0;
-            right: 0;
-            margin: auto;
-            height: 310px;
+        * {
+            background-color: var(--theme-color-1);
+            color: var(--theme-color-2);
+        }
+
+        #homelink {
+            color: var(--theme-color-2);
+            text-decoration: none;
+        }
+
+        #help {
+            display: none;
+            color: white;
+        }
+
+        #helplist {
+            list-style-type: none;
+        }
+
+        #game {
+            display: none;
+        }
+
+        #leaderboard {
+            display: none;
+        }
+
+        div#game > div#lobbies.col-2.border-end > div.row > a {
+            text-decoration: none;
+            color: white;
+        }
+
+        .dropdown-menu {
+            background-color: transparent;
+            color: white;
+        }
+
+        .lead > #gamelink {
+            background-color: var(--theme-color-2);
+            color: var(--theme-color-1);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--theme-color-2);
+            margin-right: 10px;
+        }
+
+            .lead > #gamelink:hover {
+                background-color: var(--subtheme-color-2);
+                color: var(--subtheme-color-1);
+                border-color: var(--subtheme-color-2);
+            }
+
+        #themes {
+            display: none;
+        }
+
+        body > div > header > .nav > .dropdown > #dropdownMenuLink {
+            color: white;
         }
 
         a {
-            text-decoration: none;
-            color: #1a1a1a;
+            color: var(--theme-color-2);
         }
 
-        h1 {
-            margin-bottom: 60px;
-            text-align: center;
-            font: 300 2.25em "Lato";
-            text-transform: uppercase;
+        .nav-link {
+            color: var(--theme-color-2);
         }
 
-            h1 strong {
-                font-weight: 400;
-                color: #ea4c4c;
+            .nav-link:hover {
+                color: var(--subtheme-color-2);
             }
 
-        h2 {
-            margin-bottom: 80px;
-            text-align: center;
-            font: 300 0.7em "Lato";
-            text-transform: uppercase;
+        hr {
+            color: var(--subtheme-color-2);
         }
 
-            h2 strong {
-                font-weight: 400;
-            }
-
-        .countdown {
-            width: 720px;
-            margin: 0 auto;
+        #themes > .btn {
+            background-color: var(--theme-color-2);
+            color: var(--theme-color-1);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--theme-color-2);
+            margin-right: 10px;
         }
 
-            .countdown .bloc-time {
-                float: left;
-                margin-right: 45px;
-                text-align: center;
+            #themes > .btn:hover {
+                background-color: var(--subtheme-color-2);
+                color: var(--subtheme-color-1);
+                border-color: var(--subtheme-color-2);
             }
 
-                .countdown .bloc-time:last-child {
-                    margin-right: 0;
-                }
+        #game > #lobbies > .btn {
+            background-color: var(--subtheme-color-2);
+            color: var(--subtheme-color-1);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--subtheme-color-2);
+            margin-right: 10px;
+        }
 
-            .countdown .count-title {
-                display: block;
-                margin-bottom: 15px;
-                font: normal 0.94em "Lato";
-                color: #ffffff;
-                text-transform: uppercase;
-            }
-
-            .countdown .figure {
-                position: relative;
-                float: left;
-                height: 110px;
-                width: 100px;
+            #game > #lobbies > .btn:hover {
+                background-color: var(--subtheme-color-1);
+                color: var(--subtheme-color-2);
+                border-width: 5px;
+                border-style: solid;
+                border-color: var(--subtheme-color-1);
                 margin-right: 10px;
-                background-color: #fff;
-                border-radius: 8px;
-                -moz-box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.2), inset 2px 4px 0 0 rgba(255, 255, 255, 0.08);
-                -webkit-box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.2), inset 2px 4px 0 0 rgba(255, 255, 255, 0.08);
-                box-shadow: 0 3px 4px 0 rgba(0, 0, 0, 0.2), inset 2px 4px 0 0 rgba(255, 255, 255, 0.08);
             }
 
-                .countdown .figure:last-child {
-                    margin-right: 0;
-                }
+        #themes > .btn:hover {
+            background-color: var(--subtheme-color-2);
+            color: var(--subtheme-color-1);
+            border-color: var(--subtheme-color-2);
+        }
 
-                .countdown .figure > span {
-                    position: absolute;
-                    left: 0;
-                    right: 0;
-                    margin: auto;
-                    font: normal 5.94em/107px "Lato";
-                    font-weight: 700;
-                    color: #de4848;
-                }
+        div#playerinterface.col-2 > div.dropdown > div.btn-group.dropstart > button#give.btn-outline-light.btn-sm.dropdown-toggle {
+            background-color: var(--subtheme-color-2);
+            color: var(--subtheme-color-1);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--subtheme-color-2);
+            margin-right: 10px;
+        }
 
-                .countdown .figure .top:after, .countdown .figure .bottom-back:after {
-                    content: "";
-                    position: absolute;
-                    z-index: -1;
-                    left: 0;
-                    bottom: 0;
-                    width: 100%;
-                    height: 100%;
-                    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-                }
+            div#playerinterface.col-2 > div.dropdown > div.btn-group.dropstart > button#give.btn-outline-light.btn-sm.dropdown-toggle:hover {
+                background-color: var(--subtheme-color-1);
+                color: var(--subtheme-color-2);
+                border-width: 5px;
+                border-style: solid;
+                border-color: var(--subtheme-color-1);
+                margin-right: 10px;
+            }
 
-                .countdown .figure .top {
-                    z-index: 3;
-                    background-color: #f7f7f7;
-                    transform-origin: 50% 100%;
-                    -webkit-transform-origin: 50% 100%;
-                    -moz-border-radius-topleft: 10px;
-                    -webkit-border-top-left-radius: 10px;
-                    border-top-left-radius: 10px;
-                    -moz-border-radius-topright: 10px;
-                    -webkit-border-top-right-radius: 10px;
-                    border-top-right-radius: 10px;
-                    -moz-transform: perspective(200px);
-                    -ms-transform: perspective(200px);
-                    -webkit-transform: perspective(200px);
-                    transform: perspective(200px);
-                }
+        div#playerinterface.col-2 > div.dropdown > div.btn-group.dropstart > button#attack.btn-outline-light.btn-sm.dropdown-toggle {
+            background-color: var(--subtheme-color-2);
+            color: var(--subtheme-color-1);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--subtheme-color-2);
+            margin-right: 10px;
+        }
 
-                .countdown .figure .bottom {
-                    z-index: 1;
-                }
+            div#playerinterface.col-2 > div.dropdown > div.btn-group.dropstart > button#attack.btn-outline-light.btn-sm.dropdown-toggle:hover {
+                background-color: var(--subtheme-color-1);
+                color: var(--subtheme-color-2);
+                border-width: 5px;
+                border-style: solid;
+                border-color: var(--subtheme-color-1);
+                margin-right: 10px;
+            }
 
-                    .countdown .figure .bottom:before {
-                        content: "";
-                        position: absolute;
-                        display: block;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 50%;
-                        background-color: rgba(0, 0, 0, 0.02);
-                    }
+        .left {
+            background-color: var(--subtheme-color-2);
+            color: var(--subtheme-color-1);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--subtheme-color-2);
+            margin-right: 10px;
+        }
 
-                .countdown .figure .bottom-back {
-                    z-index: 2;
-                    top: 0;
-                    height: 50%;
-                    overflow: hidden;
-                    background-color: #f7f7f7;
-                    -moz-border-radius-topleft: 10px;
-                    -webkit-border-top-left-radius: 10px;
-                    border-top-left-radius: 10px;
-                    -moz-border-radius-topright: 10px;
-                    -webkit-border-top-right-radius: 10px;
-                    border-top-right-radius: 10px;
-                }
+            .left:hover {
+                background-color: var(--subtheme-color-1);
+                color: var(--subtheme-color-2);
+                border-width: 5px;
+                border-style: solid;
+                border-color: var(--subtheme-color-1);
+                margin-right: 10px;
+            }
 
-                    .countdown .figure .bottom-back span {
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        margin: auto;
-                    }
+        .up {
+            background-color: var(--subtheme-color-2);
+            color: var(--subtheme-color-1);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--subtheme-color-2);
+            margin-right: 10px;
+        }
 
-                .countdown .figure .top, .countdown .figure .top-back {
-                    height: 50%;
-                    overflow: hidden;
-                    -moz-backface-visibility: hidden;
-                    -webkit-backface-visibility: hidden;
-                    backface-visibility: hidden;
-                }
+            .up:hover {
+                background-color: var(--subtheme-color-1);
+                color: var(--subtheme-color-2);
+                border-width: 5px;
+                border-style: solid;
+                border-color: var(--subtheme-color-1);
+                margin-right: 10px;
+            }
 
-                .countdown .figure .top-back {
-                    z-index: 4;
-                    bottom: 0;
-                    background-color: #fff;
-                    -webkit-transform-origin: 50% 0;
-                    transform-origin: 50% 0;
-                    -moz-transform: perspective(200px) rotateX(180deg);
-                    -ms-transform: perspective(200px) rotateX(180deg);
-                    -webkit-transform: perspective(200px) rotateX(180deg);
-                    transform: perspective(200px) rotateX(180deg);
-                    -moz-border-radius-bottomleft: 10px;
-                    -webkit-border-bottom-left-radius: 10px;
-                    border-bottom-left-radius: 10px;
-                    -moz-border-radius-bottomright: 10px;
-                    -webkit-border-bottom-right-radius: 10px;
-                    border-bottom-right-radius: 10px;
-                }
+        .right {
+            background-color: var(--subtheme-color-2);
+            color: var(--subtheme-color-1);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--subtheme-color-2);
+            margin-right: 10px;
+        }
 
-                    .countdown .figure .top-back span {
-                        position: absolute;
-                        top: -100%;
-                        left: 0;
-                        right: 0;
-                        margin: auto;
-                    }
+            .right:hover {
+                background-color: var(--subtheme-color-1);
+                color: var(--subtheme-color-2);
+                border-width: 5px;
+                border-style: solid;
+                border-color: var(--subtheme-color-1);
+                margin-right: 10px;
+            }
 
+        .down {
+            background-color: var(--subtheme-color-2);
+            color: var(--subtheme-color-1);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--subtheme-color-2);
+            margin-right: 10px;
+        }
+
+            .down:hover {
+                background-color: var(--subtheme-color-1);
+                color: var(--subtheme-color-2);
+                border-width: 5px;
+                border-style: solid;
+                border-color: var(--subtheme-color-1);
+                margin-right: 10px;
+            }
+
+        .upgrade {
+            background-color: var(--subtheme-color-2);
+            color: var(--subtheme-color-1);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--subtheme-color-2);
+            margin-right: 10px;
+        }
+
+            .upgrade:hover {
+                background-color: var(--subtheme-color-1);
+                color: var(--subtheme-color-2);
+                border-width: 5px;
+                border-style: solid;
+                border-color: var(--subtheme-color-1);
+                margin-right: 10px;
+            }
     </style>
+
 </head>
 
-<body class="d-flex h-100 text-center text-white bg-dark">
-
-
+<body class="d-flex h-100 text-center text-white bg-dark container-fluid">
     <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
         <header class="mb-auto">
-            <h1 class="float-md-start mb-0">Tank Tactics</h1><br /><br /><br />
-        <hr />
+            <div>
+                <h3 class="float-md-start mb-0">
+                    <a href="#home" id="homelink">
+                        Tank Tactics
+                    </a>
+                </h3>
+                <nav class="nav nav-masthead justify-content-center float-md-end">
+                    <div class="dropdown">
+                        <a class="btn dropdown-toggle" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--theme-color-2);">
+                            Discord
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                            <li><a class="nav-link active" aria-current="page" href="https://discord.com/app" target="_blank">Open Discord</a></li>
+                            <li><a class="nav-link" href="https://discord.com/api/oauth2/authorize?client_id=893072412558655558&permissions=2048&scope=bot%20applications.commands" target="_blank">Invite the bot</a></li>
+                        </ul>
+                    </div>
+                    <a class="nav-link" href="#help" id="helplink">Help</a>
+                    <a class="nav-link" href="#themes" id="themeslink">Themes</a>
+                    <a class="nav-link" href="#leaderboard" id="leaderboardlink">Leaderboard</a>
+                </nav>
+            </div>
+            <br />
+            <br />
+            <hr />
         </header>
-
         <main class="px-3">
-                <div class="wrap">
-                    <h1>Launch <strong>Countdown</strong></h1>
-                    <div class="countdown">
-                        <div class="bloc-time hours" data-init-value="24">
-                            <span class="count-title">Hours</span>
-
-                            <div class="figure hours hours-1">
-                                <span class="top">2</span>
-                                <span class="top-back">
-                                    <span>2</span>
-                                </span>
-                                <span class="bottom">2</span>
-                                <span class="bottom-back">
-                                    <span>2</span>
-                                </span>
-                            </div>
-
-                            <div class="figure hours hours-2">
-                                <span class="top">4</span>
-                                <span class="top-back">
-                                    <span>4</span>
-                                </span>
-                                <span class="bottom">4</span>
-                                <span class="bottom-back">
-                                    <span>4</span>
-                                </span>
-                            </div>
+            <div id="home">
+                <h1 style="color: var(--theme-color-2);">Tank Tactics</h1>
+                <p class="lead">
+                    <a class="btn btn-lg fw-bold" href="#game" id="gamelink">Play Game</a>
+                </p>
+            </div>
+            <div id="help">
+                <h1>Help</h1>
+                <br>
+                <div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active">
+                            Follow this tutorial in order to learn how to play this game.
+                            <br />
+                            1. First you must <a href="https://discord.com/api/oauth2/authorize?client_id=893072412558655558&permissions=2048&scope=bot%20applications.commands" target="_blank">Invite the bot</a>.<br />
+                            2. Then type "!join" in the chat in order to join the game.
+                            <br />
+                            3. Then navigate here and click on the lobby.
+                            <br />
                         </div>
+                        <div class="carousel-item">
+                            You will be given a action point randomly throughout the day.<br />
+                            You can use it to move around and increase the accuracy for your tank.
+                            <br />
+                            If you are horizontally or vertically in the same line as another tank u can attack it.
+                            <br /> The goal of the Game is to be the last man alive.
+                            <br />
+                            You can give any other player your action points.
+                            <br />
 
-                        <div class="bloc-time min" data-init-value="0">
-                            <span class="count-title">Minutes</span>
-
-                            <div class="figure min min-1">
-                                <span class="top">0</span>
-                                <span class="top-back">
-                                    <span>0</span>
-                                </span>
-                                <span class="bottom">0</span>
-                                <span class="bottom-back">
-                                    <span>0</span>
-                                </span>
-                            </div>
-
-                            <div class="figure min min-2">
-                                <span class="top">0</span>
-                                <span class="top-back">
-                                    <span>0</span>
-                                </span>
-                                <span class="bottom">0</span>
-                                <span class="bottom-back">
-                                    <span>0</span>
-                                </span>
-                            </div>
+                            Dont worry if you die then you can give the alive people your action points when you get them.
+                            <br />
+                            This makes the dead players the strongest players.
+                            <br />
+                            So in order to win you must talk to other player form alliances and in the end you may have to betray them.
                         </div>
-
-                        <div class="bloc-time sec" data-init-value="0">
-                            <span class="count-title">Seconds</span>
-
-                            <div class="figure sec sec-1">
-                                <span class="top">0</span>
-                                <span class="top-back">
-                                    <span>0</span>
-                                </span>
-                                <span class="bottom">0</span>
-                                <span class="bottom-back">
-                                    <span>0</span>
-                                </span>
-                            </div>
-
-                            <div class="figure sec sec-2">
-                                <span class="top">0</span>
-                                <span class="top-back">
-                                    <span>0</span>
-                                </span>
-                                <span class="bottom">0</span>
-                                <span class="bottom-back">
-                                    <span>0</span>
-                                </span>
-                            </div>
+                        <div class="carousel-item">
+                            In order to win this game you must team up talk to as many people as possible make alliances as you will not be able to win alone.
+                            <br />
+                            If you face any issues, contact one of the following staff at discord:
+                            <ul id="helplist">
+                                <li>deepparag#6330</li>
+                                <li>ThunderX#6969</li>
+                                <li>DaWise_Weirdo#1120</li>
+                                <li>multiii ;>#7676</li>
+                            </ul>
+                            <br />
+                        </div>
+                        <div class="carousel-item">
+                            Report Bugs and Give Suggestions Here.
+                            <br />
+                            <embed src="https://forms.gle/FenEgrA2m5mbEtx96" />
                         </div>
                     </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
                 </div>
-        </main>
+            </div>
+            <div id="game" class="row">
+                <!-- Alerts to be displayed here -->
+                <div id="alertspawn"></div>
+                <!--Menu Showing List Of Active Lobbies-->
+                <div id="lobbies" class="col-2 border-end">
 
-        <footer class="mt-auto text-white-50"><hr />
-                                              <p class="">A game which runs in both discord and on website and is idle, real time and coop.<br> This is war based statergy game in which u have to cooperate with players to win. A game made by a squad of friends.</p>
+                </div>
+                <!-- The Canvas for the Actual Game -->
+                <div id="gameview" class="col-8 border-end">
+                    <img style="width:100%; height:auto;" id="game-image" />
+                </div>
+                <!--Dropdown button with options of attacking and giving points-->
+                <div id="playerinterface" class="col-2">
+                </div>
+            </div>
+            <div id="themes">
+                <h3>Color Themes</h3>
+                <button type="button" class="btn" id="light">Set Light Theme</button>
+                <br>
+                <button type="button" class="btn" id="dark">Set Dark Theme</button>
+                <br>
+                <br>
+                Theme Color One: <input type="color" id="themecolorone">
+                <br>
+                Theme Color Two: <input type="color" id="themecolortwo">
+                <br>
+                Subtheme Color One: <input type="color" id="subthemecolorone">
+                <br>
+                Subtheme Color Two: <input type="color" id="subthemecolortwo">
+                <br>
+                <br>
+                <button type="button" class="btn" id="colorpicker">Set Color Theme</button>
+            </div>
+            <div id="leaderboard">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">User ID</th>
+                            <th scope="col">Wins</th>
+                            <th scope="col">Kills</th>
+                            <th scope="col">Deaths</th>
+                            <th scope="col">KD Ratio</th>
+                            <th scope="col">AP Given</th>
+                            <th scope="col">AP Received</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardcontent" class="table">
+                    </tbody>
+                </table>
+            </div>
+        </main>
+        <footer class="mt-auto text-white-50">
+            <hr>
+            <p>
+                A game which runs on both the communication platform discord and on website. It's idle, real time and co-op.<br> This is war based statergy game in which you have to co-operate with players to win.
+                <br>
+                A game made by a squad of friends.
+            </p>
         </footer>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.1/js/bootstrap.min.js"></script>
-
-    <script>
-        // Create Countdown
-        var Countdown = {
-
-            // Backbone-like structure
-            $el: $('.countdown'),
-
-            // Params
-            countdown_interval: null,
-            total_seconds: 0,
-
-            // Initialize the countdown
-            init: function (hours,minutes,seconds) {
-
-                // DOM
-                this.$ = {
-                    hours: this.$el.find('.bloc-time.hours .figure'),
-                    minutes: this.$el.find('.bloc-time.min .figure'),
-                    seconds: this.$el.find('.bloc-time.sec .figure')
-                };
-
-                // Init countdown values
-                this.values = {
-                    hours: hours,
-                    minutes: minutes,
-                    seconds: seconds,
-                };
-
-                // Initialize total seconds
-                this.total_seconds = this.values.hours * 60 * 60 + (this.values.minutes * 60) + this.values.seconds;
-
-                // Animate countdown to the end
-                this.count();
-            },
-
-            count: function () {
-
-                var that = this,
-                    $hour_1 = this.$.hours.eq(0),
-                    $hour_2 = this.$.hours.eq(1),
-                    $min_1 = this.$.minutes.eq(0),
-                    $min_2 = this.$.minutes.eq(1),
-                    $sec_1 = this.$.seconds.eq(0),
-                    $sec_2 = this.$.seconds.eq(1);
-
-                this.countdown_interval = setInterval(function () {
-
-                    if (that.total_seconds > 0) {
-
-                        --that.values.seconds;
-
-                        if (that.values.minutes >= 0 && that.values.seconds < 0) {
-
-                            that.values.seconds = 59;
-                            --that.values.minutes;
-                        }
-
-                        if (that.values.hours >= 0 && that.values.minutes < 0) {
-
-                            that.values.minutes = 59;
-                            --that.values.hours;
-                        }
-
-                        // Update DOM values
-                        // Hours
-                        that.checkHour(that.values.hours, $hour_1, $hour_2);
-
-                        // Minutes
-                        that.checkHour(that.values.minutes, $min_1, $min_2);
-
-                        // Seconds
-                        that.checkHour(that.values.seconds, $sec_1, $sec_2);
-
-                        --that.total_seconds;
-                    }
-                    else {
-                        location.href = location.origin + "/game.html";
-
-                        clearInterval(that.countdown_interval);
-                    }
-                }, 1000);
-            },
-
-            animateFigure: function ($el, value) {
-
-                var that = this,
-                    $top = $el.find('.top'),
-                    $bottom = $el.find('.bottom'),
-                    $back_top = $el.find('.top-back'),
-                    $back_bottom = $el.find('.bottom-back');
-
-                // Before we begin, change the back value
-                $back_top.find('span').html(value);
-
-                // Also change the back bottom value
-                $back_bottom.find('span').html(value);
-
-                // Then animate
-                TweenMax.to($top, 0.8, {
-                    rotationX: '-180deg',
-                    transformPerspective: 300,
-                    ease: Quart.easeOut,
-                    onComplete: function () {
-
-                        $top.html(value);
-
-                        $bottom.html(value);
-
-                        TweenMax.set($top, { rotationX: 0 });
-                    }
-                });
-
-                TweenMax.to($back_top, 0.8, {
-                    rotationX: 0,
-                    transformPerspective: 300,
-                    ease: Quart.easeOut,
-                    clearProps: 'all'
-                });
-            },
-
-            checkHour: function (value, $el_1, $el_2) {
-
-                var val_1 = value.toString().charAt(0),
-                    val_2 = value.toString().charAt(1),
-                    fig_1_value = $el_1.find('.top').html(),
-                    fig_2_value = $el_2.find('.top').html();
-
-                if (value >= 10) {
-
-                    // Animate only if the figure has changed
-                    if (fig_1_value !== val_1) this.animateFigure($el_1, val_1);
-                    if (fig_2_value !== val_2) this.animateFigure($el_2, val_2);
-                }
-                else {
-
-                    // If we are under 10, replace first figure with 0
-                    if (fig_1_value !== '0') this.animateFigure($el_1, 0);
-                    if (fig_2_value !== val_1) this.animateFigure($el_2, val_1);
-                }
-            }
-        };
-        const date_now = Date.parse(new Date());
-        const date_future = Date.parse("11 Oct 2021 23:59:59 GMT+0530");
-
-        if (date_future - date_now > 0) {
-            var delta = Math.abs(date_future - date_now) / 1000;
-
-            // calculate (and subtract) whole days
-            var days = Math.floor(delta / 86400);
-            delta -= days * 86400;
-
-            // calculate (and subtract) whole hours
-            var hours = Math.floor(delta / 3600) % 24;
-            delta -= hours * 3600;
-
-            // calculate (and subtract) whole minutes
-            var minutes = Math.floor(delta / 60) % 60;
-            delta -= minutes * 60;
-
-            // what's left is seconds
-            var seconds = delta % 60;
-
-            hours = hours + days * 24;
-            // Let's go !
-            Countdown.init(hours, minutes, seconds);
-        } else {
-            location.href = location.origin + "/game.html";
-        }
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/mustache@latest"></script>
+    <script id="template" type="x-tmpl-mustache">
+        <div class="carousel-item"  id="PlayerData">
+        <div style="width:100%;height:auto; min-height:20px;background-color:{{color.color}}"> </div>
+         <span class="justify-content-center" style="text-align:center">{{name}}<br>Action points: {{actionPoints}}<br> Health: {{health}}  <br> accuracy: {{accuracy}}%<span>
+        </div>
     </script>
 
+    <script id="lobby" type="x-tmpl-mustache">
+        <button class="btn btn-outline-light btn-sm " onclick="channelId = '{{channelId}}';RenderMap();">{{channelName}} in {{serverName}}</button>
+    </script>
+
+
+    <script id="attackTemplate" type="x-tmpl-mustache">
+        <button class="btn btn-outline-light btn-sm "  onclick="move({{id}},'attack')">{{name}}</button>
+
+    </script>
+
+
+    <script id="stealTemplate" type="x-tmpl-mustache">
+             <button class="btn btn-outline-light btn-sm " onclick="move({{id}},'steal')">{{name}}</button>
+    </script>
+
+    <script id="giveTemplate" type="x-tmpl-mustache">
+        <button class="btn btn-outline-light btn-sm " onclick="move({{id}},'give')">{{name}}</button>
+
+
+    </script>
+    <script>
+        let root = document.querySelector(':root');
+
+        if (window.localStorage.getItem('theme-color-1') == null) {
+            window.localStorage.setItem('theme-color-1', '#343a40');
+            window.localStorage.setItem('theme-color-2', '#ffffff');
+            window.localStorage.setItem('subtheme-color-1', '#6c757d');
+            window.localStorage.setItem('subtheme-color-2', 'antiquewhite');
+        } else {
+            root.style.setProperty('--theme-color-1', (window.localStorage.getItem('theme-color-1')));
+            root.style.setProperty('--theme-color-2', (window.localStorage.getItem('theme-color-2')));
+            root.style.setProperty('--subtheme-color-1', (window.localStorage.getItem('subtheme-color-1')));
+            root.style.setProperty('--subtheme-color-2', (window.localStorage.getItem('subtheme-color-2')));
+        }
+
+
+        let channelId = 0;
+        let alertspawn = document.querySelector("#alertspawn");
+        // Helper Functions:
+        function getUrlVars() {
+            let vars = {};
+            let parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, (m, key, value) => {
+                vars[key] = value;
+            });
+            return vars;
+        }
+
+        function notify(message) {
+            alertspawn.innerHTML = `
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                `;
+        }
+
+        function move(id, type) {
+            $.get('https://tanktactics.uc.r.appspot.com/move', {
+                "channelId": channelId,
+                "userId": getUrlVars()['userId'].split('#')[0],
+                "move": type,
+                "id": id
+            }, resp => {
+                notify(resp.message);
+                RenderMap();
+            });
+        }
+
+        //Draw RenderMap
+        function RenderMap() {
+            if (channelId != 0) {
+                $.get('https://tanktactics.uc.r.appspot.com/data', { "channelId": channelId }, resp => {
+                    console.log(resp);
+                    let game = resp;
+                    const width = game.boardSize * 2 * 10 + 10;
+                    const height = game.boardSize * 2 * 10 + 10;
+
+                    const canvas = document.createElement('canvas');
+                    canvas.setAttribute("width", width);
+                    canvas.setAttribute("height", height);
+                    const context = canvas.getContext('2d');
+                    context.fillStyle = '#343a40';
+                    context.fillRect(0, 0, width, height)
+
+                    context.fillStyle = '#a39c93';
+                    for (var x = 0; x < game.boardSize; x++) {
+
+                        for (var y = 0; y < game.boardSize; y++) {
+                            context.fillRect(x * 20 + 10, y * 20 + 10, 10, 10);
+                        }
+
+                    }
+                    var rendered = "";
+                    var attack = "";
+                    var give = "";
+                    var steal = "";
+                    game.users.forEach((user) => {
+                        rendered += Mustache.render(document.getElementById('template').innerHTML, user);
+                        if (user.health > 0) {
+                            context.fillStyle = user.color.color;
+                            context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
+                        }
+                        attack += Mustache.render(document.getElementById('attackTemplate').innerHTML, user);
+                        give += Mustache.render(document.getElementById('giveTemplate').innerHTML, user);
+                        steal += Mustache.render(document.getElementById('stealTemplate').innerHTML, user);
+                    });
+                    document.getElementById('stealMenu').innerHTML = steal;
+                    document.getElementById('attackMenu').innerHTML = attack;
+                    document.getElementById('giveMenu').innerHTML = give;
+                    document.getElementById('playerData').innerHTML = rendered;
+                    document.getElementById('PlayerData').classList.add('active');
+                    document.getElementById('game-image').src = canvas.toDataURL();
+
+                });
+
+            }
+        }
+
+        let home = document.querySelector('#home');
+        let help = document.querySelector('#help');
+        let game = document.querySelector('#game');
+        let themes = document.querySelector('#themes');
+        let leaderboard = document.querySelector('#leaderboard');
+
+        let homelink = document.querySelector('#homelink');
+        let helplink = document.querySelector('#helplink');
+        let gamelink = document.querySelector('#gamelink');
+        let themeslink = document.querySelector('#themeslink');
+        let leaderboardlink = document.querySelector('#leaderboardlink');
+
+        let lobbies = document.querySelector("#lobbies");
+        let gameview = document.querySelector("#gameview");
+        let playerInterface = document.querySelector("#playerinterface");
+
+        let themeone = document.querySelector('#themecolorone');
+        let themetwo = document.querySelector('#themecolortwo');
+        let subthemeone = document.querySelector('#subthemecolorone');
+        let subthemetwo = document.querySelector('#subthemecolortwo');
+
+        let darkmode = document.querySelector('#dark');
+        let lightmode = document.querySelector('#light');
+        let colorpicker = document.querySelector('#colorpicker');
+
+        playerInterface.innerHTML = `
+                                                    <span class=""> <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
+                                          <div class="carousel-inner" id="playerData">
+                                          </div>
+                                          <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+                                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                            <span class="visually-hidden">Previous</span>
+                                          </button>
+                                          <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+                                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                            <span class="visually-hidden">Next</span>
+                                          </button>
+                                         </div></span>
+                                                    <div class="dropdown">
+                                                        <div class="btn-group dropstart" role="group">
+                                                            <button class="btn btn-outline-light btn-sm dropdown-toggle" id="give" data-toggle="dropdown" data-bs-toggle="dropdown"
+                                                            aria-expanded="false">Give Action Points</button>
+                                                            <ul class="dropdown-menu" aria-labelledby="give" id="giveMenu">
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    <div class="dropdown">
+                                                        <div class="btn-group dropstart" role="group">
+                                                            <button class="btn btn-outline-light btn-sm dropdown-toggle" id="attack" data-toggle="dropdown" data-bs-toggle="dropdown"
+                                                             aria-expanded="false">Attack Opponents</button>
+                                                            <ul class="dropdown-menu" aria-labelledby="attack" id="attackMenu">
+
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                      <div class="dropdown">
+                                                        <div class="btn-group dropstart" role="group">
+                                                            <button class="btn btn-outline-light btn-sm dropdown-toggle" id="give" data-toggle="dropdown" data-bs-toggle="dropdown"
+                                                            aria-expanded="false">Steal Action Points</button>
+                                                            <ul class="dropdown-menu" aria-labelledby="give" id="stealMenu">
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    <hr>
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <button class="btn btn-outline-light" onclick="move(99,'left');">Left</button>
+                                                        <button class="btn btn-outline-light onclick="move(99,'up');" >Up</button>
+                                                    </div>
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <button class="btn btn-outline-light"onclick="move(99,'right');">Right</button>
+                                                        <button class="btn btn-outline-light"onclick="move(99,'down');">Down</button>
+                                                        <br>
+
+                                                    </div>
+      <button class="btn btn-outline-light"onclick="move(99,'upgrade');" >Upgrade</button>
+<br>
+     <button class="btn btn-outline-light"onclick="move(99,'heal');" >Heal</button>
+                                                `;
+
+        // Theme Change:
+        function enterLightMode() {
+            root.style.setProperty('--theme-color-1', '#ffffff');
+            root.style.setProperty('--theme-color-2', '#343a40');
+            root.style.setProperty('--subtheme-color-1', '#f8f9fa');
+            root.style.setProperty('--subtheme-color-2', '#6c757d');
+
+            window.localStorage.setItem('theme-color-1', '#ffffff');
+            window.localStorage.setItem('theme-color-2', '#343a40');
+            window.localStorage.setItem('subtheme-color-1', '#f8f9fa');
+            window.localStorage.setItem('subtheme-color-2', '#6c757d');
+        }
+
+        function enterDarkMode() {
+            root.style.setProperty('--theme-color-1', '#343a40');
+            root.style.setProperty('--theme-color-2', '#ffffff');
+            root.style.setProperty('--subtheme-color-1', '#6c757d');
+            root.style.setProperty('--subtheme-color-2', '#f8f9fa');
+
+            window.localStorage.setItem('theme-color-1', '#343a40');
+            window.localStorage.setItem('theme-color-2', '#ffffff');
+            window.localStorage.setItem('subtheme-color-1', '#6c757d');
+            window.localStorage.setItem('subtheme-color-2', '#f8f9fa');
+        }
+
+        function enterCustomTheme() {
+            root.style.setProperty('--theme-color-1', themeone.value);
+            root.style.setProperty('--theme-color-2', themetwo.value);
+            root.style.setProperty('--subtheme-color-1', subthemeone.value);
+            root.style.setProperty('--subtheme-color-2', subthemetwo.value);
+
+            window.localStorage.setItem('theme-color-1', themeone.value);
+            window.localStorage.setItem('theme-color-2', themetwo.value);
+            window.localStorage.setItem('subtheme-color-1', subthemeone.value);
+            window.localStorage.setItem('subtheme-color-2', subthemetwo.value);
+        }
+
+        // Single Page App Helper Functions:
+        function showHome() {
+            game.style.display = "none";
+            help.style.display = "none";
+            home.style.display = "block";
+            themes.style.display = "none";
+            leaderboard.style.display = "none";
+        }
+
+        function showLeaderBoard() {
+            game.style.display = "none";
+            home.style.display = "none";
+            help.style.display = "none";
+            themes.style.display = "none";
+            leaderboard.style.display = "block";
+            $.get('https://tanktactics.uc.r.appspot.com/leaderboard', {}, function (resp) {
+                console.log(resp);
+                let lb = resp;
+                let content = ``;
+                for (let person of lb) {
+                    content += `
+                            <tr>
+                                <td>${person.userId}</td>
+                                <td>${person.wins}</td>
+                                <td>${person.kills}</td>
+                                <td>${person.deaths}</td>
+                                <td>${person.kills / person.deaths}</td>
+                                <td>${person.apGiven}</td>
+                                <td>${person.apRecived}</td>
+                            </tr>
+                            `;
+                }
+                document.querySelector('#leaderboardcontent').innerHTML = content;
+            });
+        }
+
+        function showHelp() {
+            game.style.display = "none";
+            home.style.display = "none";
+            help.style.display = "block";
+            themes.style.display = "none";
+            leaderboard.style.display = "none";
+        }
+
+        function showGame() {
+            // Make the list of lobbies on the left
+            $.get('https://tanktactics.uc.r.appspot.com/games', {
+                "userId": getUrlVars()['userId'].split('#')[0]
+            }, resp => {
+                let lobbylist = "";
+                var lobbyTemplate = document.getElementById('lobby');
+                console.log(resp);
+                if (resp.length > 0) {
+                    resp.forEach(lobby => {
+                        lobbylist += Mustache.render(lobbyTemplate.innerHTML, lobby);
+                    });
+                    lobbies.innerHTML = lobbylist;
+                    // Make the Game Page visible
+                    home.style.display = 'none';
+                    help.style.display = 'none';
+                    game.style.display = 'flex';
+                    themes.style.display = 'none';
+                    leaderboard.style.display = 'none';
+                } else {
+                    alert('Please join a lobby. If you dont know how to see help!!');
+                }
+            });
+        }
+
+        function showThemes() {
+            home.style.display = 'none';
+            help.style.display = 'none';
+            game.style.display = 'none';
+            themes.style.display = 'block';
+            leaderboard.style.display = 'none';
+        }
+
+        homelink.addEventListener('click', showHome);
+        helplink.addEventListener('click', showHelp);
+        themeslink.addEventListener('click', showThemes);
+        leaderboardlink.addEventListener('click', showLeaderBoard);
+        gamelink.addEventListener('click', () => {
+            if (!(getUrlVars().hasOwnProperty('userId')) || getUrlVars()['userId'] === '') {
+                showHome();
+                gamelink.href = "https://discord.com/api/oauth2/authorize?client_id=893072412558655558&redirect_uri=https%3A%2F%2Ftanktactics.uc.r.appspot.com%2Fauthorize&response_type=code&scope=identify%20guilds";
+            } else {
+                showHome();
+                gamelink.href = "#game";
+                showGame();
+            }
+        });
+
+
+        lightmode.addEventListener('click', enterLightMode);
+        darkmode.addEventListener('click', enterDarkMode);
+        colorpicker.addEventListener('click', enterCustomTheme);
+
+        setInterval(RenderMap, 1000 * 60);
+
+    </script>
+
+
 </body>
+
 </html>
