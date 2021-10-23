@@ -23,6 +23,9 @@ handlers:
 - url: /
   upload: public/index.html
   static_files: public/index.html
+- url: /favicon.ico
+  upload: public/favicon.ico
+  static_files: public/favicon.ico
 - url: /.*
   script: auto
 
