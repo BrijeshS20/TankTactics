@@ -311,9 +311,7 @@
 
     <script id="attackTemplate" type="x-tmpl-mustache">
         <button class="btn btn-outline-light btn-sm "  onclick="move({{id}},'attack')">{{name}}</button>
-
     </script>
-
 
     <script id="stealTemplate" type="x-tmpl-mustache">
              <button class="btn btn-outline-light btn-sm " onclick="move({{id}},'steal')">{{name}}</button>
@@ -321,8 +319,14 @@
 
     <script id="giveTemplate" type="x-tmpl-mustache">
         <button class="btn btn-outline-light btn-sm " onclick="move({{id}},'give')">{{name}}</button>
+    </script>
 
+    <script id="resortTemplate" type="x-tmpl-mustache">
+             <button class="btn btn-outline-light btn-sm " onclick="move({{id}},'resort')">{{name}}</button>
+    </script>
 
+    <script id="reviveTemplate" type="x-tmpl-mustache">
+        <button class="btn btn-outline-light btn-sm " onclick="move({{id}},'revive')">{{name}}</button>
     </script>
     <script>
 
@@ -367,20 +371,20 @@
             return decodeURI(dc.substring(begin + prefix.length, end));
         }
 
-          
+
         function notify(message) {
             alertspawn.innerHTML = `
-                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                `;
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    `;
         }
 
         function move(id, type) {
             $.get('https://tanktactics.uc.r.appspot.com/move', {
                 "channelId": channelId,
-                "userId": JSON.parse( getCookie('login').trim()).userId,
+                "userId": JSON.parse(getCookie('login').trim()).userId,
                 "key": JSON.parse(getCookie('login').trim()).key,
                 "move": type,
                 "id": id
@@ -418,6 +422,8 @@
                     var attack = "";
                     var give = "";
                     var steal = "";
+                    var resort = "";
+                    var revive = "";
                     game.users.forEach((user) => {
                         rendered += Mustache.render(document.getElementById('template').innerHTML, user);
                         if (user.health > 0) {
@@ -427,7 +433,11 @@
                         attack += Mustache.render(document.getElementById('attackTemplate').innerHTML, user);
                         give += Mustache.render(document.getElementById('giveTemplate').innerHTML, user);
                         steal += Mustache.render(document.getElementById('stealTemplate').innerHTML, user);
+                        resort += Mustache.render(document.getElementById('resortTemplate').innerHTML, user);
+                        revive += Mustache.render(document.getElementById('reviveTemplate').innerHTML, user);
                     });
+                    document.getElementById('resortMenu').innerHTML = steal;
+                    document.getElementById('reviveMenu').innerHTML = attack;
                     document.getElementById('stealMenu').innerHTML = steal;
                     document.getElementById('attackMenu').innerHTML = attack;
                     document.getElementById('giveMenu').innerHTML = give;
@@ -466,58 +476,74 @@
         let colorpicker = document.querySelector('#colorpicker');
 
         playerInterface.innerHTML = `
-                                                    <span class=""> <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
-                                          <div class="carousel-inner" id="playerData">
-                                          </div>
-                                          <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
-                                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                            <span class="visually-hidden">Previous</span>
-                                          </button>
-                                          <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
-                                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                            <span class="visually-hidden">Next</span>
-                                          </button>
-                                         </div></span>
-                                                    <div class="dropdown">
-                                                        <div class="btn-group dropstart" role="group">
-                                                            <button class="btn btn-outline-light btn-sm dropdown-toggle" id="give" data-toggle="dropdown" data-bs-toggle="dropdown"
-                                                            aria-expanded="false">Give Action Points</button>
-                                                            <ul class="dropdown-menu" aria-labelledby="give" id="giveMenu">
-                                                            </ul>
+                                                        <span class=""> <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
+                                              <div class="carousel-inner" id="playerData">
+                                              </div>
+                                              <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+                                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                                <span class="visually-hidden">Previous</span>
+                                              </button>
+                                              <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+                                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                                <span class="visually-hidden">Next</span>
+                                              </button>
+                                             </div></span>
+                                                        <div class="dropdown">
+                                                            <div class="btn-group dropstart" role="group">
+                                                                <button class="btn btn-outline-light btn-sm dropdown-toggle" id="give" data-toggle="dropdown" data-bs-toggle="dropdown"
+                                                                aria-expanded="false">Give Action Points</button>
+                                                                <ul class="dropdown-menu" aria-labelledby="give" id="giveMenu">
+                                                                </ul>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <div class="dropdown">
-                                                        <div class="btn-group dropstart" role="group">
-                                                            <button class="btn btn-outline-light btn-sm dropdown-toggle" id="attack" data-toggle="dropdown" data-bs-toggle="dropdown"
-                                                             aria-expanded="false">Attack Opponents</button>
-                                                            <ul class="dropdown-menu" aria-labelledby="attack" id="attackMenu">
+                                                        <div class="dropdown">
+                                                            <div class="btn-group dropstart" role="group">
+                                                                <button class="btn btn-outline-light btn-sm dropdown-toggle" id="attack" data-toggle="dropdown" data-bs-toggle="dropdown"
+                                                                 aria-expanded="false">Attack Opponents</button>
+                                                                <ul class="dropdown-menu" aria-labelledby="attack" id="attackMenu">
 
-                                                            </ul>
+                                                                </ul>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                      <div class="dropdown">
-                                                        <div class="btn-group dropstart" role="group">
-                                                            <button class="btn btn-outline-light btn-sm dropdown-toggle" id="give" data-toggle="dropdown" data-bs-toggle="dropdown"
-                                                            aria-expanded="false">Steal Action Points</button>
-                                                            <ul class="dropdown-menu" aria-labelledby="give" id="stealMenu">
-                                                            </ul>
+                                                          <div class="dropdown">
+                                                            <div class="btn-group dropstart" role="group">
+                                                                <button class="btn btn-outline-light btn-sm dropdown-toggle" id="steal" data-toggle="dropdown" data-bs-toggle="dropdown"
+                                                                aria-expanded="false">Steal Action Points</button>
+                                                                <ul class="dropdown-menu" aria-labelledby="give" id="stealMenu">
+                                                                </ul>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <hr>
-                                                    <div class="btn-group btn-group-sm" role="group">
-                                                        <button class="btn btn-outline-light" onclick="move(99,'left');">Left</button>
-                                                        <button class="btn btn-outline-light onclick="move(99,'up');" >Up</button>
-                                                    </div>
-                                                    <div class="btn-group btn-group-sm" role="group">
-                                                        <button class="btn btn-outline-light"onclick="move(99,'right');">Right</button>
-                                                        <button class="btn btn-outline-light"onclick="move(99,'down');">Down</button>
-                                                        <br>
+                                                       <div class="dropdown">
+                                                            <div class="btn-group dropstart" role="group">
+                                                                <button class="btn btn-outline-light btn-sm dropdown-toggle" id="revive" data-toggle="dropdown" data-bs-toggle="dropdown"
+                                                                aria-expanded="false">Revive </button>
+                                                                <ul class="dropdown-menu" aria-labelledby="give" id="reviveMenu">
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                       <div class="dropdown">
+                                                            <div class="btn-group dropstart" role="group">
+                                                                <button class="btn btn-outline-light btn-sm dropdown-toggle" id="resort" data-toggle="dropdown" data-bs-toggle="dropdown"
+                                                                aria-expanded="false">Revive </button>
+                                                                <ul class="dropdown-menu" aria-labelledby="give" id="resortMenu">
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                        <hr>
+                                                        <div class="btn-group btn-group-sm" role="group">
+                                                            <button class="btn btn-outline-light" onclick="move(99,'left');">Left</button>
+                                                            <button class="btn btn-outline-light onclick="move(99,'up');" >Up</button>
+                                                        </div>
+                                                        <div class="btn-group btn-group-sm" role="group">
+                                                            <button class="btn btn-outline-light"onclick="move(99,'right');">Right</button>
+                                                            <button class="btn btn-outline-light"onclick="move(99,'down');">Down</button>
+                                                            <br>
 
-                                                    </div>
-      <button class="btn btn-outline-light"onclick="move(99,'upgrade');" >Upgrade</button>
+                                                        </div>
+          <button class="btn btn-outline-light"onclick="move(99,'upgrade');" >Upgrade</button>
 <br>
-     <button class="btn btn-outline-light"onclick="move(99,'heal');" >Heal</button>
-                                                `;
+         <button class="btn btn-outline-light"onclick="move(99,'heal');" >Heal</button>
+                                                    `;
 
         // Theme Change:
         function enterLightMode() {
@@ -577,16 +603,16 @@
                 let content = ``;
                 for (let person of lb) {
                     content += `
-                            <tr>
-                                <td>${person.userId}</td>
-                                <td>${person.wins}</td>
-                                <td>${person.kills}</td>
-                                <td>${person.deaths}</td>
-                                <td>${person.kills / person.deaths}</td>
-                                <td>${person.apGiven}</td>
-                                <td>${person.apRecived}</td>
-                            </tr>
-                            `;
+                                <tr>
+                                    <td>${person.userId}</td>
+                                    <td>${person.wins}</td>
+                                    <td>${person.kills}</td>
+                                    <td>${person.deaths}</td>
+                                    <td>${person.kills / person.deaths}</td>
+                                    <td>${person.apGiven}</td>
+                                    <td>${person.apRecived}</td>
+                                </tr>
+                                `;
                 }
                 document.querySelector('#leaderboardcontent').innerHTML = content;
             });
@@ -639,7 +665,7 @@
         themeslink.addEventListener('click', showThemes);
         leaderboardlink.addEventListener('click', showLeaderBoard);
 
-      
+
         let vars = {};
         let parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, (m, key, value) => {
             vars[key] = value;
@@ -654,13 +680,13 @@
                 location.replace('/');
             }
         }
-       
+
         gamelink.addEventListener('click', () => {
-            if (getCookie('login')==null) {
+            if (getCookie('login') == null) {
                 showHome();
                 gamelink.href = "https://discord.com/api/oauth2/authorize?client_id=893072412558655558&redirect_uri=https%3A%2F%2Ftanktactics.uc.r.appspot.com%2Fauthorize&response_type=code&scope=identify%20guilds";
             } else {
-               
+
                 showHome();
                 gamelink.href = "#game";
                 showGame();

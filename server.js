@@ -544,6 +544,7 @@ client.connect(err => {
                         response.message = "Please wait before attacking again.";
                     }
                 }
+
                 if (move.toLowerCase() == "give") {
 
                     var enemy = getUserById(game, id);
@@ -631,7 +632,35 @@ client.connect(err => {
                         }
                     } else {
                         response.code = 405;
-                        response.message = "Dead players cannot be healed.";
+                        response.message = "Dead player cannot be healed.";
+                    }
+                }
+
+                if (move.toLowerCase() == "revive") {
+                    var user = getUserById(game, userId);
+                    if (user.health > 0) {
+                        var enemy = getUserById(game, id);
+                        if (typeof enemy != "undefined") {
+                            if (enemy.health > 0) {
+                                response.code = 405;
+                                response.message = "You can not revive  alive players.";
+                            } else {
+                                if (Math.random() * 100 < 5) {
+                                    enemy.health = 2;
+                                    response.code = 200;
+                                    response.message = user.name + " has revived " + enemy.name;
+                                } else {
+                                    response.code = 200;
+                                    response.message = user.name + " tried to revive " + enemy.name;
+                                }
+                            }
+                        } else {
+                            response.code = 405;
+                            response.message = "No such player.";
+                        }
+                    } else {
+                        response.code = 405;
+                        response.message = "Dead players cannot revive other players.";
                     }
                 }
 
@@ -673,7 +702,7 @@ client.connect(err => {
                         }
                     } else {
                         response.code = 405;
-                        response.message = "Please wait before attacking again.";
+                        response.message = "Please wait before stealing  again.";
                     }
                 }
 
@@ -688,6 +717,95 @@ client.connect(err => {
             response.message = "You need to wait for more players.";
         }
 
+
+        if (move.toLowerCase() == "resort") {
+            var user = getUserById(game, userId);
+            var enemy = getUserById(game, id);
+            if (user.health > 0) {
+                if (typeof enemy != "undefined") {
+
+                    if (user.resorted == null) {
+                        if (enemy.health > 0) {
+                            enemy.health = enemy.health - 2;
+                            if (enemy.health < 0) {
+                                enemy.health = 0;
+                            }
+                            user.resorted = true;
+                            if (enemy.health == 0) {
+                                var userStats = await userCollection.findOne({ "userId": user.id });
+                                var enemyStats = await userCollection.findOne({ "userId": enemy.id });
+
+
+                                if (userStats === null) {
+                                    userStats = createUserStats(user.id);
+                                    userCollection.insertOne(userStats, function (err, res) {
+                                        if (err) console.log(err);
+                                    }
+                                    );
+                                }
+
+                                if (enemyStats === null) {
+                                    enemyStats = createUserStats(enemy.id);
+                                    userCollection.insertOne(enemyStats, function (err, res) {
+                                        if (err) console.log(err);
+
+                                    }
+                                    );
+                                }
+
+                                userStats.kills++;
+                                enemyStats.deaths++;
+
+                                alivePeople = 0;
+                                game.users.forEach(checkUserHealth => {
+                                    if (checkUserHealth.health > 0) {
+                                        alivePeople++;
+                                    }
+                                });
+
+                                response.message = user.name + " has killed " + enemy.name;
+                                if (alivePeople == 1) {
+                                    userStats.wins++;
+                                    response.code = 100;
+                                    response.message = user.name + " has killed " + enemy.name + " and has won.";
+                                }
+                                userCollection.updateOne({ "userId": user.id }, {
+                                    $set: userStats
+                                }, function (err, res) {
+                                    if (err) console.log(err);
+                                    console.log("game updated: " + game.channelId);
+                                }
+                                );
+                                userCollection.updateOne({ "userId": enemy.id }, {
+                                    $set: enemyStats
+                                }, function (err, res) {
+                                    if (err) console.log(err);
+                                    console.log("game updated: " + game.channelId);
+                                }
+                                );
+
+                            } else {
+
+                                response.message = user.name + " has attacked " + enemy.name;
+                            }
+                        } else {
+                            response.code = 405;
+                            response.message = "You cant kill dead players";
+                        }
+                    } else {
+                        response.code = 405;
+                        response.message = "You cant use !resort twice in a game.";
+                    }
+                } else {
+                    response.code = 405;
+                    response.message = "No such user.";
+                }
+            } else {
+                response.code = 405;
+                response.message = "Dead People cannot attack.";
+            }
+        }
+
         if (response.code == 200) {
             user.actionPoints--;
             if ((Math.random() * 8) < 1) {
@@ -696,6 +814,7 @@ client.connect(err => {
                 previousAction.push({ "code": 200, "message": user.name + " has gotten an action point.", "channelId": game.channelId })
             };
             response.game = game;
+            response.message += " \n has gotten a actionpoint for doing an action.";
             saveGame(game);
         }
         if (response.code == 100) {
@@ -769,12 +888,12 @@ client.connect(err => {
         var user = getUserById(game, userId);
         var response = { code: 200, message: user.name + " has left." };
         if (user != null) {
-            game.users.splice(user.playerId,1);
+            game.users.splice(user.playerId, 1);
             var users = game.users;
             var newUsers = [];
             game.id = 0;
             users.forEach(user1 => {
-                    var newUser = createUser(user1.id, user1.name, game.id, user1.x, user1.y);
+                var newUser = createUser(user1.id, user1.name, game.id, user1.x, user1.y);
                 game.id++;
                 newUser.health = user1.health;
                 newUser.actionPoints = user1.actionPoints;
