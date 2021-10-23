@@ -722,7 +722,7 @@ client.connect(err => {
         return getAllChannels().then(channelIds => {
             if (channelIds.includes(channelId)) {
 
-                if (gameData.id < 8) {
+                if (!gameData.gameRunning) {
                     if (containsUser(gameData, userId)) {
                         response.code = 405;
                         response.message = "You can join only once.";
