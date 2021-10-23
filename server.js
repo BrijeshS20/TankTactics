@@ -769,7 +769,7 @@ client.connect(err => {
         var user = getUserById(game, userId);
         var response = { code: 200, message: user.name + " has left." };
         if (user != null) {
-            game.users.splice(user.playerId);
+            game.users.splice(user.playerId,1);
             var users = game.users;
             var newUsers = [];
             game.id = 0;
