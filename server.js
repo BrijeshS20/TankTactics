@@ -6,6 +6,7 @@ const express = require('express');
 const path = require('path');
 const { NOTINITIALIZED } = require('dns');
 const { report } = require('process');
+const { response } = require('express');
 
 const app = express();
 var previousAction = [];
@@ -134,6 +135,17 @@ client.connect(err => {
     });
     app.get('/game.html', (req, res) => {
         res.redirect('/#help');
+    });
+    app.get('/leave', (req, res) => {
+        if (req.query.key == cfg.bot) {
+
+            console.log("leaving user");
+
+            leave(req.query.userId, req.query.channelId).then(action => {
+                res.send(action);
+            });
+
+        }
     });
     app.get('/games', (req, res) => {
         var login = getAccessToken(req.query.userId);
@@ -750,5 +762,33 @@ client.connect(err => {
 
             return response;
         });
+    }
+    async function leave(userId, channelId) {
+
+        var game = await getGameById(channelId);
+        var user = getUserById(game, userId);
+        var response = { code: 200, message: user.name + " has left." };
+        if (user != null) {
+            game.users.splice(user.playerId);
+            var users = game.users;
+            var newUsers = [];
+            game.id = 0;
+            users.forEach(user1 => {
+                    var newUser = createUser(user1.id, user1.name, game.id, user1.x, user1.y);
+                game.id++;
+                newUser.health = user1.health;
+                newUser.actionPoints = user1.actionPoints;
+                newUsers.push(newUser);
+            });
+
+            game.users = newUsers;
+            saveGame(game);
+
+        } else {
+            response.code = 405;
+            response.message = 'You are not in this lobby';
+        }
+
+        return response;
     }
 });
