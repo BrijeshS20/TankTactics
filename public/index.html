@@ -457,8 +457,8 @@
                         resort += Mustache.render(document.getElementById('resortTemplate').innerHTML, user);
                         revive += Mustache.render(document.getElementById('reviveTemplate').innerHTML, user);
                     });
-                   // document.getElementById('resortMenu').innerHTML = resort;
-                   // document.getElementById('reviveMenu').innerHTML = revive;
+                    document.getElementById('resortMenu').innerHTML = resort;
+                    document.getElementById('reviveMenu').innerHTML = revive;
                     document.getElementById('stealMenu').innerHTML = steal;
                     document.getElementById('attackMenu').innerHTML = attack;
                     document.getElementById('giveMenu').innerHTML = give;
@@ -545,7 +545,7 @@
                                                        <div class="dropdown">
                                                             <div class="btn-group dropstart" role="group">
                                                                 <button class="btn btn-outline-light btn-sm dropdown-toggle" id="resort" data-toggle="dropdown" data-bs-toggle="dropdown"
-                                                                aria-expanded="false">Revive </button>
+                                                                aria-expanded="false">Resort </button>
                                                                 <ul class="dropdown-menu" aria-labelledby="give" id="resortMenu">
                                                                 </ul>
                                                             </div>

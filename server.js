@@ -7,6 +7,7 @@ const path = require('path');
 const { NOTINITIALIZED } = require('dns');
 const { report } = require('process');
 const { response } = require('express');
+const { Worker } = require('worker_threads')
 
 const app = express();
 var previousAction = [];
@@ -25,6 +26,7 @@ const uri = "mongodb+srv://storage:" + cfg.db + "@cluster0.rqdvk.mongodb.net/myF
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
     const collection = client.db("Game").collection("save");
+    const fastPaceCollection = client.db("Game").collection("fast");
     const userCollection = client.db("Game").collection("user");
     console.log("Connected To db");
 
@@ -90,7 +92,7 @@ client.connect(err => {
             }
         } else {
             res.send({ "code": 405, "message": "Session Timed Out. Please reload page" });
-        } 1
+        }
     });
 
     app.get('/bot', (req, res) => {
@@ -147,6 +149,26 @@ client.connect(err => {
 
         }
     });
+
+    app.get('/start', (req, res) => {
+        if (req.query.key == cfg.bot) {
+
+            start(req.query.channelId, req.query.userId).then(action => {
+                res.send(action);
+            });
+
+        }
+    });
+
+    app.get('/fast', (req, res) => {
+        if (req.query.key == cfg.bot) {
+
+            fastMode(req.query.channelId, req.query.userId).then(action => {
+                res.send(action);
+            });
+
+        }
+    });
     app.get('/games', (req, res) => {
         var login = getAccessToken(req.query.userId);
         if (req.query.key == cfg.bot || login != null) {
@@ -165,7 +187,7 @@ client.connect(err => {
     const PORT = process.env.PORT || 8080;
     app.listen(PORT, () => {
         console.log("Starting server!!!");
-        calculateActionPoints();
+        calculateActionPointsForFastMode();
     });
 
     async function getAccessToken(userId) {
@@ -180,21 +202,25 @@ client.connect(err => {
         collection.find({}).toArray(function (err, games) {
             games.forEach((game) => {
                 if (game.gameRunning) {
-                    game.users.forEach(user => {
-                        alivePeople = 0;
-                        game.users.forEach(checkUserHealth => {
-                            if (checkUserHealth.health > 0) {
-                                alivePeople++;
-                            }
-                        });
-
-                        if (alivePeople == 1) {
-                            collection.deleteOne({ "channelId": game.channelId }, function (err, obj) {
-                                if (err) throw err;
-
-                                console.log("1 document deleted");
-                            });
+                    alivePeople = 0;
+                    game.users.forEach(checkUserHealth => {
+                        if (checkUserHealth.health > 0) {
+                            alivePeople++;
                         }
+                    });
+
+                    if (alivePeople == 1) {
+                        collection.deleteOne({ "channelId": game.channelId }, function (err, obj) {
+                            if (err) throw err;
+
+                            console.log("1 document deleted");
+                        });
+                    }
+                    if (game.fastPaced == null) {
+                        game.fastPaced = false;
+                    }
+                    game.users.forEach(user => {
+
                         user.hour++;
                         if (user.health == 0) {
                             user.hour = user.hour + 3;
@@ -211,9 +237,52 @@ client.connect(err => {
                 }
             });
         });
-        setTimeout(calculateActionPoints, 1000 * 60 * 60);
+      
     }
+    var minutes = 0;
+    async function calculateActionPointsForFastMode() {
+        minutes++;
+        fastPaceCollection.find({}).toArray(function (err, games) {
+            games.forEach((game) => {
+                if (game.gameRunning) {
+                    alivePeople = 0;
+                    game.users.forEach(checkUserHealth => {
+                        if (checkUserHealth.health > 0) {
+                            alivePeople++;
+                        }
+                    });
 
+                    if (alivePeople == 1) {
+                        collection.deleteOne({ "channelId": game.channelId }, function (err, obj) {
+                            if (err) throw err;
+
+                            console.log("1 document deleted");
+                        });
+                    }
+                    game.users.forEach(user => {
+
+                        user.hour++;
+                        if (user.health == 0) {
+                            user.hour = user.hour + 3;
+                        }
+                        if ((Math.random() * 14) < user.hour) {
+                            user.hour = 0;
+                            user.actionPoints++;
+                            previousAction.push({ "code": 200, "message": user.name + " has gotten an action point.", "channelId": game.channelId })
+                        };
+
+
+                    });
+                    saveGame(game);
+                }
+            });
+        });
+        if (minutes == 60) {
+            minutes = 0;
+            calculateActionPoints();
+        }
+        setTimeout(calculateActionPointsForFastMode, 1000 * 60);
+    }
 
     //channels
     async function getAllChannels() {
@@ -294,7 +363,7 @@ client.connect(err => {
     //Game Function
     function createGame(channelId, channelName, serverName) {
         return {
-            "users": [], "channelId": channelId, "id": 0, "gameRunning": false, "channelName": channelName, "serverName": serverName, "boardSize": 32
+            "users": [], "channelId": channelId, "id": 0, "fastPaced": false, "gameRunning": false, "channelName": channelName, "serverName": serverName, "boardSize": 32
         }
     }
 
@@ -311,21 +380,36 @@ client.connect(err => {
     }
 
     function saveGame(game, channelId) {
-        collection.updateOne({
-            "channelId": game.channelId
-        }, {
-            $set: game
-        }, function (err, res) {
-            if (err) console.log(err);
-            console.log("game updated: " + game.channelId);
+        if (!game.fastPaced) {
+            collection.updateOne({
+                "channelId": game.channelId
+            }, {
+                $set: game
+            }, function (err, res) {
+                if (err) console.log(err);
+                console.log("game updated: " + game.channelId);
+            }
+            );
+        } else {
+            fastPaceCollection.updateOne({
+                "channelId": game.channelId
+            }, {
+                $set: game
+            }, function (err, res) {
+                if (err) console.log(err);
+                console.log("game updated: " + game.channelId);
+            }
+            );
         }
-        );
     }
 
     async function getGameById(channelId) {
         var game = await collection.findOne({ "channelId": channelId });
         if (game == null) {
-            createGame(channelId, "", "");
+            game = await fastPaceCollection.findOne({ "channelId": channelId });
+            if (game == null) {
+                game = createGame(channelId, "", "");
+            }
         }
         return game;
     }
@@ -383,6 +467,132 @@ client.connect(err => {
 
     }
 
+    async function start(channelId, userId) {
+        var game = await getGameById(channelId);
+        var response = { code: 200, message: " The game has started. \n Stats are only counted for games with over 6 players.", game: null };
+        if (game.users.length > 3) {
+            if (game.users[0].id == userId) {
+                game.gameRunning = true;
+                saveGame(game);
+            } else {
+                response.code = 405;
+                response.message = "You are not the host. Ask " + game.users[0].name + " to start. \n Stats are only counted for games with over 6 players."
+            }
+        } else {
+            response.code = 405;
+            response.message = "You need atleast 4 players. \n Stats are only counted for games with over 6 players."
+        }
+        return response;
+
+    }
+
+    async function fastMode(channelId, userId) {
+        var game = await getGameById(channelId);
+        var response = { code: 200, message: " The game has been switched to Fast mode.", game: null };
+
+        if (game.users[0].id == userId) {
+            collection.deleteOne({ "channelId": game.channelId }).then(result => {
+
+                console.log(`${result.deletedCount} document(s) was/were deleted.`)
+            });
+
+            game.fastPaced = true;
+            fastPaceCollection.insertOne(game, function (err, res) {
+                if (err) console.log(err);
+                console.log("game updated: " + game.channelId);
+            });
+            saveGame(game);
+        } else {
+            response.code = 405;
+            response.message = "You are not the host. Ask " + game.users[0].name + " to change."
+        }
+        return response;
+
+    }
+    async function join(channelId, userId, name, channelName, serverName, gameData) {
+
+        var userStats = await userCollection.findOne({ "userId": userId });
+        if (userStats === null) {
+            userStats = createUserStats(userId);
+            userCollection.insertOne(userStats, function (err, res) {
+                if (err) console.log(err);
+                console.log("game updated: " + game.channelId);
+            }
+            );
+        }
+        var response = { code: 200, message: name + " has joined.", game: null };
+        return getAllChannels().then(channelIds => {
+            if (channelIds.includes(channelId)) {
+
+                if (!gameData.gameRunning) {
+                    if (containsUser(gameData, userId)) {
+                        response.code = 405;
+                        response.message = "You can join only once.";
+                    } else {
+                        var x = Math.round(Math.random() * gameData.boardSize);
+                        var y = Math.round(Math.random() * gameData.boardSize);
+                        gameData.users.push(createUser(userId, name, gameData.id, x, y));
+                        gameData.id++;
+                        if (gameData.id > 7) {
+                            gameData.gameRunning = true;
+                        }
+                        saveGame(gameData);
+                        response.game = gameData;
+                    }
+                } else {
+                    response.code = 405;
+                    response.message = "The lobby is full.";
+                }
+
+            } else {
+                var game = createGame(channelId, channelName, serverName);
+                var x = Math.round(Math.random() * game.boardSize);
+                var y = Math.round(Math.random() * game.boardSize);
+                game.users.push(createUser(userId, name, game.id, x, y));
+                game.id++;
+                collection.insertOne(game, function (err, res) {
+                    if (err) console.log(err);
+                    console.log("game updated: " + game.channelId);
+                }
+                );
+                if (game.id > 7) {
+                    game.gameRunning = true;
+                }
+
+                response.game = game;
+            }
+
+            return response;
+        });
+    }
+    async function leave(userId, channelId) {
+
+        var game = await getGameById(channelId);
+        var user = getUserById(game, userId);
+        var response = { code: 200, message: user.name + " has left." };
+        if (user != null) {
+            game.users.splice(user.playerId, 1);
+            var users = game.users;
+            var newUsers = [];
+            game.id = 0;
+            users.forEach(user1 => {
+                var newUser = createUser(user1.id, user1.name, game.id, user1.x, user1.y);
+                game.id++;
+                newUser.health = user1.health;
+                newUser.actionPoints = user1.actionPoints;
+                newUsers.push(newUser);
+            });
+
+            game.users = newUsers;
+            saveGame(game);
+
+        } else {
+            response.code = 405;
+            response.message = 'You are not in this lobby';
+        }
+
+        return response;
+    }
 
     async function UpdateGameMovement(game, userId, move, id) {
         userId = Number(userId);
@@ -461,7 +671,9 @@ client.connect(err => {
                                     if (enemy.x == user.x || enemy.y == user.y) {
                                         if (Math.random() * 100 < user.accuracy) {
                                             enemy.health--;
-                                            user.lastAttack = Date.now();
+                                            if (!game.fastPaced) {
+                                                user.lastAttack = Date.now();
+                                            }
                                             if (enemy.health == 0) {
                                                 var userStats = await userCollection.findOne({ "userId": user.id });
                                                 var enemyStats = await userCollection.findOne({ "userId": enemy.id });
@@ -500,21 +712,22 @@ client.connect(err => {
                                                     response.code = 100;
                                                     response.message = user.name + " has killed " + enemy.name + " and has won.";
                                                 }
-                                                userCollection.updateOne({ "userId": user.id }, {
-                                                    $set: userStats
-                                                }, function (err, res) {
-                                                    if (err) console.log(err);
-                                                    console.log("game updated: " + game.channelId);
+                                                if (game.users.length > 5) {
+                                                    userCollection.updateOne({ "userId": user.id }, {
+                                                        $set: userStats
+                                                    }, function (err, res) {
+                                                        if (err) console.log(err);
+                                                        console.log("game updated: " + game.channelId);
+                                                    }
+                                                    );
+                                                    userCollection.updateOne({ "userId": enemy.id }, {
+                                                        $set: enemyStats
+                                                    }, function (err, res) {
+                                                        if (err) console.log(err);
+                                                        console.log("game updated: " + game.channelId);
+                                                    }
+                                                    );
                                                 }
-                                                );
-                                                userCollection.updateOne({ "userId": enemy.id }, {
-                                                    $set: enemyStats
-                                                }, function (err, res) {
-                                                    if (err) console.log(err);
-                                                    console.log("game updated: " + game.channelId);
-                                                }
-                                                );
-
                                             } else {
 
                                                 response.message = user.name + " has attacked " + enemy.name;
@@ -573,22 +786,22 @@ client.connect(err => {
                             userStats.apGiven++;
                             enemyStats.apRecived++;
 
-
-                            userCollection.updateOne({ "userId": user.id }, {
-                                $set: userStats
-                            }, function (err, res) {
-                                if (err) console.log(err);
-                                console.log("game updated: " + game.channelId);
+                            if (game.users.length > 5) {
+                                userCollection.updateOne({ "userId": user.id }, {
+                                    $set: userStats
+                                }, function (err, res) {
+                                    if (err) console.log(err);
+                                    console.log("game updated: " + game.channelId);
+                                }
+                                );
+                                userCollection.updateOne({ "userId": enemy.id }, {
+                                    $set: enemyStats
+                                }, function (err, res) {
+                                    if (err) console.log(err);
+                                    console.log("game updated: " + game.channelId);
+                                }
+                                );
                             }
-                            );
-                            userCollection.updateOne({ "userId": enemy.id }, {
-                                $set: enemyStats
-                            }, function (err, res) {
-                                if (err) console.log(err);
-                                console.log("game updated: " + game.channelId);
-                            }
-                            );
-
 
                             enemy.actionPoints++;
                             response.message = user.name + " has given his action points to " + enemy.name;
@@ -769,21 +982,22 @@ client.connect(err => {
                                     response.code = 100;
                                     response.message = user.name + " has killed " + enemy.name + " and has won.";
                                 }
-                                userCollection.updateOne({ "userId": user.id }, {
-                                    $set: userStats
-                                }, function (err, res) {
-                                    if (err) console.log(err);
-                                    console.log("game updated: " + game.channelId);
+                                if (game.users.length > 5) {
+                                    userCollection.updateOne({ "userId": user.id }, {
+                                        $set: userStats
+                                    }, function (err, res) {
+                                        if (err) console.log(err);
+                                        console.log("game updated: " + game.channelId);
+                                    }
+                                    );
+                                    userCollection.updateOne({ "userId": enemy.id }, {
+                                        $set: enemyStats
+                                    }, function (err, res) {
+                                        if (err) console.log(err);
+                                        console.log("game updated: " + game.channelId);
+                                    }
+                                    );
                                 }
-                                );
-                                userCollection.updateOne({ "userId": enemy.id }, {
-                                    $set: enemyStats
-                                }, function (err, res) {
-                                    if (err) console.log(err);
-                                    console.log("game updated: " + game.channelId);
-                                }
-                                );
-
                             } else {
 
                                 response.message = user.name + " has attacked " + enemy.name;
@@ -823,91 +1037,6 @@ client.connect(err => {
                 console.log(`${result.deletedCount} document(s) was/were deleted.`)
             });
         }
-        return response;
-    }
-
-    async function join(channelId, userId, name, channelName, serverName, gameData) {
-
-        var userStats = await userCollection.findOne({ "userId": userId });
-        if (userStats === null) {
-            userStats = createUserStats(userId);
-            userCollection.insertOne(userStats, function (err, res) {
-                if (err) console.log(err);
-                console.log("game updated: " + game.channelId);
-            }
-            );
-        }
-        var response = { code: 200, message: name + " has joined.", game: null };
-        return getAllChannels().then(channelIds => {
-            if (channelIds.includes(channelId)) {
-
-                if (!gameData.gameRunning) {
-                    if (containsUser(gameData, userId)) {
-                        response.code = 405;
-                        response.message = "You can join only once.";
-                    } else {
-                        var x = Math.round(Math.random() * gameData.boardSize);
-                        var y = Math.round(Math.random() * gameData.boardSize);
-                        gameData.users.push(createUser(userId, name, gameData.id, x, y));
-                        gameData.id++;
-                        if (gameData.id > 7) {
-                            gameData.gameRunning = true;
-                        }
-                        saveGame(gameData);
-                        response.game = gameData;
-                    }
-                } else {
-                    response.code = 405;
-                    response.message = "The lobby is full.";
-                }
-
-            } else {
-                var game = createGame(channelId, channelName, serverName);
-                var x = Math.round(Math.random() * game.boardSize);
-                var y = Math.round(Math.random() * game.boardSize);
-                game.users.push(createUser(userId, name, game.id, x, y));
-                game.id++;
-                collection.insertOne(game, function (err, res) {
-                    if (err) console.log(err);
-                    console.log("game updated: " + game.channelId);
-                }
-                );
-                if (game.id > 7) {
-                    game.gameRunning = true;
-                }
-
-                response.game = game;
-            }
-
-            return response;
-        });
-    }
-    async function leave(userId, channelId) {
-
-        var game = await getGameById(channelId);
-        var user = getUserById(game, userId);
-        var response = { code: 200, message: user.name + " has left." };
-        if (user != null) {
-            game.users.splice(user.playerId, 1);
-            var users = game.users;
-            var newUsers = [];
-            game.id = 0;
-            users.forEach(user1 => {
-                var newUser = createUser(user1.id, user1.name, game.id, user1.x, user1.y);
-                game.id++;
-                newUser.health = user1.health;
-                newUser.actionPoints = user1.actionPoints;
-                newUsers.push(newUser);
-            });
-
-            game.users = newUsers;
-            saveGame(game);
-
-        } else {
-            response.code = 405;
-            response.message = 'You are not in this lobby';
-        }
-
         return response;
     }
 });
