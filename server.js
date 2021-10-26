@@ -428,7 +428,14 @@ client.connect(err => {
     //API main function
     async function getGames(userId) {
         var lobbies = [];
-        const cursor = collection.find({});
+        var cursor = collection.find({});
+        while (await cursor.hasNext()) {
+            const game = await cursor.next();
+            if (containsUser(game, userId)) {
+                lobbies.push({ "channelId": game.channelId, "channelName": game.channelName, "serverName": game.serverName });
+            }
+        }
+         cursor = fastPaceCollection.find({});
         while (await cursor.hasNext()) {
             const game = await cursor.next();
             if (containsUser(game, userId)) {
