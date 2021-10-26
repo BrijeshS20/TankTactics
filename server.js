@@ -484,18 +484,18 @@ function DrawNodeJS(game) {
 
 async function start(channelId, userId) {
     var game = await getGameById(channelId);
-    var response = { code: 200, message: " The game has started. \n Stats are only counted for games with over 6 players.", game: null };
+    var response = { code: 200, message: "The game has started!\nNote: Stats are only counted for games with over 6 players.", game: null };
     if (game.users.length > 3) {
         if (game.users[0].id == userId) {
             game.gameRunning = true;
             saveGame(game);
         } else {
             response.code = 405;
-            response.message = "You are not the host. Ask " + game.users[0].name + " to start. \n Stats are only counted for games with over 6 players."
+            response.message = `You aren't the host of this lobby! Ask ${game.users[0].name} to start.\nNote: Stats are only counted for games with over 6 players.`
         }
     } else {
         response.code = 405;
-        response.message = "You need atleast 4 players. \n Stats are only counted for games with over 6 players."
+        response.message = "You need atleast 4 players!\nNote: Stats are only counted for games with over 6 players."
 
     }
 
@@ -509,7 +509,7 @@ async function start(channelId, userId) {
 
 async function fastMode(channelId, userId) {
     var game = await getGameById(channelId);
-    var response = { code: 200, message: " The game has been switched to Fast mode.", game: null };
+    var response = { code: 200, message: "The blitz gamemode has been enabled!", game: null };
 
     if (game.users[0].id == userId) {
         collection.deleteOne({ "channelId": game.channelId }).then(result => {
@@ -525,7 +525,7 @@ async function fastMode(channelId, userId) {
         saveGame(game);
     } else {
         response.code = 405;
-        response.message = "You are not the host. Ask " + game.users[0].name + " to change."
+        response.message = `You aren't the host of this lobby! Only ${game.users[0].name} can switch gamemodes.`
     }
     var actionSave = { "code": response.code, "message": response.message, "channelId": channelId };
     if (actionSave.code != 405) {
@@ -545,14 +545,14 @@ async function join(channelId, userId, name, channelName, serverName, gameData) 
         }
         );
     }
-    var response = { code: 200, message: name + " has joined.", game: null };
+    var response = { code: 200, message: name + " has joined!", game: null };
     return getAllChannels().then(channelIds => {
         if (channelIds.includes(channelId)) {
 
             if (!gameData.gameRunning) {
                 if (containsUser(gameData, userId)) {
                     response.code = 405;
-                    response.message = "You can join only once.";
+                    response.message = "You've already joined this lobby!";
                 } else {
                     var x = Math.round(Math.random() * gameData.boardSize);
                     var y = Math.round(Math.random() * gameData.boardSize);
@@ -566,7 +566,7 @@ async function join(channelId, userId, name, channelName, serverName, gameData) 
                 }
             } else {
                 response.code = 405;
-                response.message = "The lobby is full.";
+                response.message = "This lobby is already full!";
             }
 
         } else {
@@ -594,7 +594,7 @@ async function leave(userId, channelId) {
 
     var game = await getGameById(channelId);
     var user = getUserById(game, userId);
-    var response = { code: 200, message: user.name + " has left." };
+    var response = { code: 200, message: user.name + " has left!" };
     if (user != null) {
         game.users.splice(user.playerId, 1);
         var users = game.users;
@@ -613,7 +613,7 @@ async function leave(userId, channelId) {
 
     } else {
         response.code = 405;
-        response.message = 'You are not in this lobby';
+        response.message = 'You aren\'t in this lobby!';
     }
 
     return response;
@@ -633,25 +633,25 @@ async function UpdateGameMovement(game, userId, move, id) {
                         response.message = user.name + " has moved.";
                     } else {
                         response.code = 405;
-                        response.message = "Reached edge of Map.";
+                        response.message = "You've reached the world border, preventing you from moving any further!";
                     }
                 } else {
                     response.code = 405;
-                    response.message = "Dead people can not move.";
+                    response.message = "You're already dead, preventing you from moving any further!";
                 }
             }
             if (move.toLowerCase() == "down") {
                 if (user.health > 0) {
                     if (user.y < game.boardSize - 1) {
                         user.y++;
-                        response.message = user.name + " has moved.";
+                        response.message = user.name + " has moved!";
                     } else {
                         response.code = 405;
-                        response.message = "Reached edge of Map.";
+                        response.message = "You've reached the world border, preventing you from moving any further!";
                     }
                 } else {
                     response.code = 405;
-                    response.message = "Dead people can not move.";
+                    response.message = "You're already dead, preventing you from moving any further!";
                 }
             }
 
@@ -663,11 +663,11 @@ async function UpdateGameMovement(game, userId, move, id) {
                         response.message = user.name + " has moved.";
                     } else {
                         response.code = 405;
-                        response.message = "Reached edge of Map.";
+                        response.message = "You've reached the world border, preventing you from moving any further!";
                     }
                 } else {
                     response.code = 405;
-                    response.message = "Dead people can not move.";
+                    response.message = "You're already dead, preventing you from moving any further!";
                 }
             }
             if (move.toLowerCase() == "left") {
@@ -678,11 +678,11 @@ async function UpdateGameMovement(game, userId, move, id) {
                         response.message = user.name + " has moved.";
                     } else {
                         response.code = 405;
-                        response.message = "Reached edge of Map.";
+                        response.message = "You've reached the world border, preventing you from moving any further!";
                     }
                 } else {
                     response.code = 405;
-                    response.message = "Dead people can not move.";
+                    response.message = "You're already dead, preventing you from moving any further!";
                 }
             }
             if (move.toLowerCase() == "attack") {
@@ -735,7 +735,7 @@ async function UpdateGameMovement(game, userId, move, id) {
                                             if (alivePeople == 1) {
                                                 userStats.wins++;
                                                 response.code = 100;
-                                                response.message = user.name + " has killed " + enemy.name + " and has won.";
+                                                response.message = `${user.name} successfully killed ${enemy.name}, and won the game!`;
                                             }
                                             if (game.users.length > 5) {
                                                 userCollection.updateOne({ "userId": user.id }, {
@@ -755,31 +755,31 @@ async function UpdateGameMovement(game, userId, move, id) {
                                             }
                                         } else {
 
-                                            response.message = user.name + " has attacked " + enemy.name;
+                                            response.message = `${user.name} successfully attacked ${enemy.name}!`;
                                         }
                                     } else {
                                         response.code = 200;
-                                        response.message = user.name + " has tried to attack " + enemy.name;
+                                        response.message = `${user.name} tried attacking ${enemy.name}, but failed.`;
                                     }
                                 } else {
                                     response.code = 405;
-                                    response.message = "The player is neither horitontaly or vertically same to you.";
+                                    response.message = `${enemy.name} isn't in your attack range! You must be perpendicular to them before attacking.`;
                                 }
                             } else {
                                 response.code = 405;
-                                response.message = "You cant kill dead players";
+                                response.message = "You can't attack a user whose already dead!";
                             }
                         } else {
                             response.code = 405;
-                            response.message = "No such user.";
+                            response.message = "The user was not found!";
                         }
                     } else {
                         response.code = 405;
-                        response.message = "Dead People cannot attack.";
+                        response.message = `You're already dead, preventing you from attacking ${enemy.name}!`;
                     }
                 } else {
                     response.code = 405;
-                    response.message = "Please wait before attacking again.";
+                    response.message = "You are on cooldown! Please wait before attacking again.";
                 }
             }
 
@@ -829,25 +829,25 @@ async function UpdateGameMovement(game, userId, move, id) {
                         }
 
                         enemy.actionPoints++;
-                        response.message = user.name + " has given his action points to " + enemy.name;
+                        response.message = `${user.name} has given their AP to ${enemy.name}`;
 
                     } else {
                         response.code = 405;
-                        response.message = "You cant give to dead players";
+                        response.message = `You can't give your AP to ${enemy.name}, since they're dead!`;
                     }
                 } else {
                     response.code = 405;
-                    response.message = "No such user.";
+                    response.message = "The user was not found!";
                 }
 
             }
             if (move.toLowerCase() == "upgrade") {
                 if (user.accuracy < 100) {
                     user.accuracy = user.accuracy + 4;
-                    response.message = user.name + ' increased their accuracy from ' + (user.accuracy - 4) + " to " + user.accuracy;
+                    response.message = `${user.name} upgraded their tank, increasing their accuracy from ${user.accurcacy - 4} to ${user.acuraccy}!`
                 } else {
                     response.code = 405;
-                    response.message = "Your accuracy is max.";
+                    response.message = "You've already maxed out your tank!";
                 }
             }
 
@@ -859,18 +859,18 @@ async function UpdateGameMovement(game, userId, move, id) {
                         if (Math.random() * 100 < 15) {
                             user.health++;
                             response.code = 200;
-                            response.message = user.name + " has healed themself.";
+                            response.message = `${user.name} successfully healed themselves!`;
                         } else {
                             response.code = 200;
-                            response.message = user.name + " tried to heal themself.";
+                            response.message = `${user.name} tried healing themseleves, but failed!`;
                         }
                     } else {
                         response.code = 405;
-                        response.message = "Your health is max.";
+                        response.message = "You cannot heal yourself when you're already at full HP!";
                     }
                 } else {
                     response.code = 405;
-                    response.message = "Dead player cannot be healed.";
+                    response.message = "You're already dead, preventing you from healing yourself!";
                 }
             }
 
@@ -881,24 +881,24 @@ async function UpdateGameMovement(game, userId, move, id) {
                     if (typeof enemy != "undefined") {
                         if (enemy.health > 0) {
                             response.code = 405;
-                            response.message = "You can not revive  alive players.";
+                            response.message = "You cannot revive players who haven't died yet!";
                         } else {
                             if (Math.random() * 100 < 5) {
                                 enemy.health = 2;
                                 response.code = 200;
-                                response.message = user.name + " has revived " + enemy.name;
+                                response.message = user.name + " successfully revived " + enemy.name;
                             } else {
                                 response.code = 200;
-                                response.message = user.name + " tried to revive " + enemy.name;
+                                response.message = user.name + " tried reviving " + enemy.name + ", but failed!";
                             }
                         }
                     } else {
                         response.code = 405;
-                        response.message = "No such player.";
+                        response.message = "The user was not found!";
                     }
                 } else {
                     response.code = 405;
-                    response.message = "Dead players cannot revive other players.";
+                    response.message = "You're already dead, preventing you from reviving other dead players!";
                 }
             }
 
@@ -917,42 +917,42 @@ async function UpdateGameMovement(game, userId, move, id) {
                                         var apStole = Math.round(Math.random() * user.actionPoints);
                                         enemy.actionPoints = enemy.actionPoints - apStole;
                                         user.actionPoints = user.actionPoints + apStole;
-                                        response.message = user.name + " stole " + apStole + " AP from " + enemy.name;
+                                        response.message = user.name + " stole " + apStole + " AP from " + enemy.name + "!";
                                     } else {
                                         response.code = 200;
-                                        response.message = user.name + " tried to steal from " + enemy.name + " but where caught and gave them 1 Ap";
+                                        response.message = `${user.name} tried stealing AP from ${enemy.name}, but failed! They ended up giving them 1 AP.`
                                     }
                                 } else {
                                     response.code = 405;
-                                    response.message = enemy.name + " does not have more then 15 Ap . Leave them alone.";
+                                    response.message = `Users such as ${enemy.name}, who don't have more than 15 AP cannot be stolen from.`;
                                 }
                             } else {
                                 response.code = 405;
-                                response.message = "You cant steal from dead players.";
+                                response.message = "You can't steal from dead players!";
                             }
                         } else {
                             response.code = 405;
-                            response.message = "No such player.";
+                            response.message = "The user was not found!";
                         }
                     } else {
                         response.code = 405;
-                        response.message = "Dead People cannot steal.";
+                        response.message = "You're already dead, preventing you from stealing AP from other players!";
                     }
                 } else {
                     response.code = 405;
-                    response.message = "Please wait before stealing  again.";
+                    response.message = "You are on cooldown! Please wait before stealing again.";
                 }
             }
 
 
         } else {
             response.code = 405;
-            response.message = "You need more action points!!";
+            response.message = "You need more action points!";
         }
 
     } else {
         response.code = 405;
-        response.message = "You need to wait for more players.";
+        response.message = "You need to wait for more players!";
     }
 
 
@@ -1001,11 +1001,11 @@ async function UpdateGameMovement(game, userId, move, id) {
                                 }
                             });
 
-                            response.message = user.name + " has killed " + enemy.name;
+                            response.message = user.name + " has successfully killed " + enemy.name;
                             if (alivePeople == 1) {
                                 userStats.wins++;
                                 response.code = 100;
-                                response.message = user.name + " has killed " + enemy.name + " and has won.";
+                                response.message = user.name + " has successfully killed " + enemy.name + ", and won the game!";
                             }
                             if (game.users.length > 5) {
                                 userCollection.updateOne({ "userId": user.id }, {
@@ -1029,19 +1029,19 @@ async function UpdateGameMovement(game, userId, move, id) {
                         }
                     } else {
                         response.code = 405;
-                        response.message = "You cant kill dead players";
+                        response.message = `${enemy.name} is already dead!`;
                     }
                 } else {
                     response.code = 405;
-                    response.message = "You cant use !resort twice in a game.";
+                    response.message = "The `resort` command can't be used more than once per lobby!";
                 }
             } else {
                 response.code = 405;
-                response.message = "No such user.";
+                response.message = "The user was not found!";
             }
         } else {
             response.code = 405;
-            response.message = "Dead People cannot attack.";
+            response.message = "You're already dead, preventing you from attacking other players!";
         }
     }
 
@@ -1050,8 +1050,8 @@ async function UpdateGameMovement(game, userId, move, id) {
         if ((Math.random() * 8) < 1) {
             user.hour = 0;
             user.actionPoints++;
-            previousAction.push({ "code": 200, "message": user.name + " has gotten an action point.", "channelId": game.channelId });
-            response.message += " \n has gotten a actionpoint for doing an action.";
+            previousAction.push({ "code": 200, "message": user.name + " has received an AP!", "channelId": game.channelId });
+            response.message += `\n${user.name} has received an AP for doing an action.`;
         };
         response.game = game;
       
