@@ -1058,10 +1058,17 @@ async function UpdateGameMovement(game, userId, move, id) {
         saveGame(game);
     }
     if (response.code == 100) {
-        collection.deleteOne({ "channelId": game.channelId }).then(result => {
+        if (!game.fastMode) {
+            collection.deleteOne({ "channelId": game.channelId }).then(result => {
 
-            console.log(`${result.deletedCount} document(s) was/were deleted.`)
-        });
+                console.log(`${result.deletedCount} document(s) was/were deleted.`)
+            });
+        } else {
+            fastPaceCollection.deleteOne({ "channelId": game.channelId }).then(result => {
+
+                console.log(`${result.deletedCount} document(s) was/were deleted.`)
+            });
+        }
     }
     return response;
 }
