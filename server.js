@@ -12,6 +12,8 @@ const { Worker } = require('worker_threads')
 const app = express();
 var previousAction = [];
 app.use(express.static(path.resolve(path.join(__dirname, '/public'))));
+var minutes = 0;
+
 
 const oauth = new DiscordOauth2({
     clientId: cfg.id,
@@ -24,13 +26,14 @@ const oauth = new DiscordOauth2({
 
 const uri = "mongodb+srv://storage:" + cfg.db + "@cluster0.rqdvk.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+//Establish connection to db.
 client.connect(err => {
     const collection = client.db("Game").collection("save");
     const fastPaceCollection = client.db("Game").collection("fast");
     const userCollection = client.db("Game").collection("user");
     console.log("Connected To db");
 
-    //apis
+    //APIS
     app.get('/', (req, res) => {
 
     });
@@ -186,50 +189,44 @@ app.get('/games', (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 8080;
+    const PORT = process.env.PORT || 8080;
+//open server.
 app.listen(PORT, () => {
     console.log("Starting server!!!");
-    calculateActionPointsForFastMode();
+    calculateActionPointsForBlitzMode();
 });
 
+
+//Getter and Setter for access token.
 async function getAccessToken(userId) {
     var loginCred = await userCollection.find({ "userId": userId });
     return loginCred;
 }
 async function setAccessToken(token, userId) {
     userCollection.insertOne({ "userId": userId + " creds", "token": token });
-}
-async function calculateActionPoints() {
+    }
+
+//Getter and Setter for access token.
+async function calculateActionPointsForNormalLobbies() {
     console.log("Calculating action points");
     collection.find({}).toArray(function (err, games) {
         games.forEach((game) => {
             if (game.gameRunning) {
-                alivePeople = 0;
-                game.users.forEach(checkUserHealth => {
-                    if (checkUserHealth.health > 0) {
-                        alivePeople++;
-                    }
-                });
-
-                if (alivePeople == 1) {
-                    collection.deleteOne({ "channelId": game.channelId }, function (err, obj) {
-                        if (err) throw err;
-
-                        console.log("1 document deleted");
-                    });
-                }
+              
                 if (game.fastPaced == null) {
                     game.fastPaced = false;
                 }
+                //Check if users gets action pont.
                 game.users.forEach(user => {
 
                     user.hour++;
                     if (user.health == 0) {
                         user.hour = user.hour + 3;
                     }
-                    if ((Math.random() * 14) < user.hour) {
+                    if ((Math.random() * 12) < user.hour) {
                         user.hour = 0;
                         user.actionPoints++;
+                        //Let everyone know that the user got the AP.
                         previousAction.push({ "code": 200, "message": user.name + " has gotten an action point.", "channelId": game.channelId })
                     };
 
@@ -241,12 +238,14 @@ async function calculateActionPoints() {
     });
 
 }
-var minutes = 0;
-async function calculateActionPointsForFastMode() {
+
+    async function calculateActionPointsForBlitzMode() {
+    //increase minutes counter.
     minutes++;
     fastPaceCollection.find({}).toArray(function (err, games) {
         games.forEach((game) => {
             if (game.gameRunning) {
+                //just checks to update old games.
                 alivePeople = 0;
                 game.users.forEach(checkUserHealth => {
                     if (checkUserHealth.health > 0) {
@@ -270,6 +269,7 @@ async function calculateActionPointsForFastMode() {
                     if ((Math.random() * 14) < user.hour) {
                         user.hour = 0;
                         user.actionPoints++;
+                           //Let everyone know that the user got the AP.
                         previousAction.push({ "code": 200, "message": user.name + " has gotten an action point.", "channelId": game.channelId })
                     };
 
@@ -279,11 +279,14 @@ async function calculateActionPointsForFastMode() {
             }
         });
     });
+    //If 1 hr up then calculte AP for normal lobbies.
     if (minutes == 60) {
         minutes = 0;
-        calculateActionPoints();
-    }
-    setTimeout(calculateActionPointsForFastMode, 1000 * 60);
+        calculateActionPointsForNormalLobbies();
+        }
+
+        //call this function again after a minute.
+    setTimeout(calculateActionPointsForBlitzMode, 1000 * 60);
 }
 
 //channels
@@ -368,7 +371,7 @@ function containsUser(game, userId) {
     }
     return userThere;
 }
-//Game Function
+//games Function
 function createGame(channelId, channelName, serverName) {
     return {
         "users": [], "channelId": channelId, "id": 0, "fastPaced": false, "gameRunning": false, "channelName": channelName, "serverName": serverName, "boardSize": 32
@@ -453,10 +456,10 @@ async function getGames(userId) {
     return lobbies;
 }
 
-
+//HELPER FUNCTIONS
 function DrawNodeJS(game) {
-    const width = game.boardSize * 2 * 10 + 10;
-    const height = game.boardSize * 2 * 10 + 10;
+    const width = game.boardSize  * 10 + 5;
+    const height = game.boardSize  * 10 + 5;
 
     const canvas = createCanvas(width, height);
     const context = canvas.getContext('2d');
@@ -468,14 +471,15 @@ function DrawNodeJS(game) {
     for (var x = 0; x < game.boardSize; x++) {
 
         for (var y = 0; y < game.boardSize; y++) {
-            context.fillRect(x * 20 + 10, y * 20 + 10, 10, 10);
+            context.fillRect(x * 10 + 5, y * 10 + 5, 5, 5);
         }
 
     }
+    //Draw the users on the map.
     game.users.forEach((user) => {
         if (user.health > 0) {
             context.fillStyle = user.color.color;
-            context.fillRect(user.x * 20 - 1.5, user.y * 20 - 1.5, 13, 13);
+            context.fillRect(user.x * 10 - 0.75, user.y * 10 - 0.75, 6.5, 6.5);
         }
     });
     return canvas;
@@ -733,11 +737,12 @@ async function UpdateGameMovement(game, userId, move, id) {
 
                                             response.message = user.name + " has killed " + enemy.name;
                                             if (alivePeople == 1) {
+                                                game.gameRunning = false;
                                                 userStats.wins++;
                                                 response.code = 100;
                                                 response.message = `${user.name} successfully killed ${enemy.name}, and won the game!`;
                                             }
-                                            if (game.users.length > 5) {
+                                            if (game.users.length > 5 ) {
                                                 userCollection.updateOne({ "userId": user.id }, {
                                                     $set: userStats
                                                 }, function (err, res) {
@@ -1058,7 +1063,7 @@ async function UpdateGameMovement(game, userId, move, id) {
         saveGame(game);
     }
     if (response.code == 100) {
-        if (!game.fastMode) {
+        if (!game.fastPaced) {
             collection.deleteOne({ "channelId": game.channelId }).then(result => {
 
                 console.log(`${result.deletedCount} document(s) was/were deleted.`)
